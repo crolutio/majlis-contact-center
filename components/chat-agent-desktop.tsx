@@ -28,6 +28,8 @@ import { SentimentIndicator } from "@/components/sentiment-indicator"
 import { ChatWrapUpView } from "@/components/chat-wrap-up"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
+import type { DbMessage } from "@/lib/types"
 
 const conversationData = {
   1: {
@@ -231,10 +233,50 @@ export function ChatAgentDesktop({
   autoAccept,
   onAutoAcceptToggle,
 }: ChatAgentDesktopProps) {
-  const [activeConversationId, setActiveConversationId] = useState(1)
-  const activeConvo = conversationData[activeConversationId as keyof typeof conversationData]
+  // Demo: For now, use numeric IDs but convert to string UUID format for API calls
+  // In production, this would come from real conversation selection
+  const [activeConversationId, setActiveConversationId] = useState<number | string>(1)
+  const activeConvo = typeof activeConversationId === "number" 
+    ? conversationData[activeConversationId as keyof typeof conversationData]
+    : null
 
-  const [messages, setMessages] = useState(activeConvo.messages)
+  // Demo agent ID - replace with real agent ID from context/store
+  const agentId = "00000000-0000-0000-0000-000000000001" // TODO: Get from auth context
+
+  // Convert numeric ID to UUID string for API calls, or use string directly
+  const conversationIdForApi = typeof activeConversationId === "string" 
+    ? activeConversationId 
+    : null // For demo mode with numeric IDs, don't use realtime
+
+  // Use realtime hook only when we have a valid UUID conversation ID
+  const { messages: dbMessages, send: sendMessage } = useConversationMessages({
+    conversationId: conversationIdForApi,
+    agentId,
+  })
+
+  // Convert DbMessage format to display format
+  const convertDbMessageToDisplay = (msg: DbMessage) => {
+    const isAgent = msg.sender_type === "agent"
+    const isWhisper = isAgent && msg.is_internal
+    const timestamp = new Date(msg.created_at).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+
+    return {
+      id: msg.id,
+      sender: isWhisper ? "whisper" : isAgent ? "agent" : "customer",
+      type: "text" as const,
+      content: msg.content,
+      timestamp,
+    }
+  }
+
+  // Use real messages if available, otherwise fall back to demo data
+  const messages = conversationIdForApi && dbMessages.length > 0
+    ? dbMessages.map(convertDbMessageToDisplay)
+    : activeConvo?.messages || []
+
   const [message, setMessage] = useState("")
   const [whisperMode, setWhisperMode] = useState(false)
   const [copiedDNI, setCopiedDNI] = useState(false)
@@ -253,10 +295,9 @@ export function ChatAgentDesktop({
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setMessages(activeConvo.messages)
     setShowVideoRequest(false)
     setShowScreenShareRequest(false)
-  }, [activeConversationId, activeConvo.messages])
+  }, [activeConversationId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -286,39 +327,36 @@ export function ChatAgentDesktop({
     }
   }
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return
+  const handleSendMessage = async () => {
+    const trimmed = message.trim()
+    if (!trimmed) return
 
-    const newMessage = {
-      id: messages.length + 1,
-      sender: whisperMode ? "whisper" : "agent",
-      type: "text" as const,
-      content: message,
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    }
-
-    setMessages([...messages, newMessage])
-    setMessage("")
-
-    // Simulate customer typing response
-    if (!whisperMode) {
-      setTimeout(() => setIsTyping(true), 1000)
-      setTimeout(() => {
-        setIsTyping(false)
-        const customerReply = {
-          id: messages.length + 2,
-          sender: "customer" as const,
-          type: "text" as const,
-          content: "Thank you for the information!",
-          timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-        }
-        setMessages((prev) => [...prev, customerReply])
-      }, 3000)
+    // If we have a real conversation ID, use the API
+    if (conversationIdForApi) {
+      try {
+        await sendMessage(trimmed, whisperMode)
+        setMessage("") // clear input
+      } catch (error) {
+        console.error("Failed to send message:", error)
+        // Optionally show error toast
+      }
+    } else {
+      // Fallback to demo mode (local only)
+      const newMessage = {
+        id: messages.length + 1,
+        sender: whisperMode ? "whisper" : "agent",
+        type: "text" as const,
+        content: trimmed,
+        timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+      }
+      setMessage("")
+      // Note: In demo mode, messages are not persisted
     }
   }
 
   const handleSmartReplyClick = (reply: string) => {
     setMessage(reply)
+    // Small delay to ensure state update, then send
     setTimeout(() => handleSendMessage(), 100)
   }
 
@@ -550,7 +588,10 @@ export function ChatAgentDesktop({
 
       <div className="flex flex-1 min-h-0">
         {/* Left: Omni-channel inbox (KB is accessible from the global left sidebar) */}
-        <ChatInbox activeConversationId={activeConversationId} onConversationSelect={setActiveConversationId} />
+        <ChatInbox 
+          activeConversationId={typeof activeConversationId === "number" ? activeConversationId : undefined} 
+          onConversationSelect={(id) => setActiveConversationId(id)} 
+        />
 
         {/* Column 2: Interaction Hub */}
         <div className="flex-1 flex flex-col border-r border-border min-h-0">
@@ -558,27 +599,31 @@ export function ChatAgentDesktop({
           <div className="bg-card border-b border-border px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center",
-                    activeConvo.channelColor === "green" && "bg-green-500/10",
-                    activeConvo.channelColor === "pink" && "bg-pink-500/10",
-                    activeConvo.channelColor === "blue" && "bg-blue-500/10",
-                  )}
-                >
-                  <MessageSquare
-                    className={cn(
-                      "w-5 h-5",
-                      activeConvo.channelColor === "green" && "text-green-600",
-                      activeConvo.channelColor === "pink" && "text-pink-600",
-                      activeConvo.channelColor === "blue" && "text-blue-600",
-                    )}
-                  />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-foreground">{activeConvo.customerName}</h2>
-                  <p className="text-xs text-muted-foreground capitalize">{activeConvo.channel} • Active</p>
-                </div>
+                {activeConvo && (
+                  <>
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-full flex items-center justify-center",
+                        activeConvo.channelColor === "green" && "bg-green-500/10",
+                        activeConvo.channelColor === "pink" && "bg-pink-500/10",
+                        activeConvo.channelColor === "blue" && "bg-blue-500/10",
+                      )}
+                    >
+                      <MessageSquare
+                        className={cn(
+                          "w-5 h-5",
+                          activeConvo.channelColor === "green" && "text-green-600",
+                          activeConvo.channelColor === "pink" && "text-pink-600",
+                          activeConvo.channelColor === "blue" && "text-blue-600",
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-foreground">{activeConvo.customerName}</h2>
+                      <p className="text-xs text-muted-foreground capitalize">{activeConvo.channel} • Active</p>
+                    </div>
+                  </>
+                )}
               </div>
               {/* Transfer button also available in chat header for convenience */}
               <div className="relative">
@@ -751,7 +796,7 @@ export function ChatAgentDesktop({
           {/* Input Area */}
           <div className="bg-card px-6 py-4">
             <div className="mb-3 flex gap-2 flex-wrap">
-              {activeConvo.smartReplies.map((reply, idx) => (
+              {activeConvo?.smartReplies.map((reply, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSmartReplyClick(reply)}
@@ -817,25 +862,27 @@ export function ChatAgentDesktop({
               <div className="space-y-2">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Full Name</p>
-                  <p className="font-semibold text-sm text-foreground">{activeConvo.customerName}</p>
+                  <p className="font-semibold text-sm text-foreground">{activeConvo?.customerName || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">DNI / ID</p>
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm text-foreground">{activeConvo.dni}</p>
-                    <button
-                      onClick={() => copyToClipboard(activeConvo.dni.replace(/\./g, ""), "dni")}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title="Copy to clipboard"
-                    >
-                      {copiedDNI ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                    </button>
+                    <p className="font-semibold text-sm text-foreground">{activeConvo?.dni || "N/A"}</p>
+                    {activeConvo?.dni && (
+                      <button
+                        onClick={() => copyToClipboard(activeConvo.dni.replace(/\./g, ""), "dni")}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        {copiedDNI ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Loyalty Status</p>
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
-                    {activeConvo.loyaltyStatus}
+                    {activeConvo?.loyaltyStatus || "Standard"}
                   </Badge>
                 </div>
               </div>
@@ -844,7 +891,7 @@ export function ChatAgentDesktop({
                 <h4 className="text-xs font-semibold text-foreground">Previous Interactions</h4>
                 <div className="relative space-y-3 pl-4">
                   <div className="absolute left-[5px] top-1 bottom-1 w-px bg-border" />
-                  {activeConvo.history.map((item, idx) => (
+                  {activeConvo?.history.map((item, idx) => (
                     <div key={idx} className="relative">
                       <div
                         className={cn(
@@ -881,7 +928,7 @@ export function ChatAgentDesktop({
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
-              {activeConvo.products.map((product, idx) => (
+              {activeConvo?.products.map((product, idx) => (
                 <div
                   key={idx}
                   className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border"

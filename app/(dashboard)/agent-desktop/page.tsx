@@ -1,6 +1,13 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+/**
+ * Agent status is managed in local state only (UI-only).
+ * The /api/agents/status route has been removed as part of the FastAPI-only backend migration.
+ * Status dropdown changes UI appearance but does not persist to database.
+ * Queue counts are static demo values.
+ */
+
+import { useState, useEffect } from "react"
 import { VoiceAgentDesktop } from "@/components/voice-agent-desktop"
 import { ChatAgentDesktop } from "@/components/chat-agent-desktop"
 import { useAuth } from "@/contexts/auth-context"
@@ -20,33 +27,9 @@ export default function AgentDesktopPage() {
   const [agentStatus, setAgentStatus] = useState<"ready" | "busy" | "break" | "offline">("ready")
   const [autoAccept, setAutoAccept] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [callsInQueue, setCallsInQueue] = useState(0)
-  const [chatsInQueue, setChatsInQueue] = useState(0)
-
-  const fetchAgentStatus = useCallback(async () => {
-    if (!user) return
-    
-    try {
-      // For demo, use user ID. In production, map to actual agent ID from database
-      const agentId = user.id || "1"
-      const response = await fetch(`/api/agents/status?agentId=${agentId}`)
-      if (response.ok) {
-        const data = await response.json()
-        // Map database status to agent desktop status
-        const statusMap: Record<string, "ready" | "busy" | "break" | "offline"> = {
-          online: "ready",
-          busy: "busy",
-          away: "break",
-          offline: "offline",
-        }
-        setAgentStatus(statusMap[data.agent?.status] || "ready")
-        setCallsInQueue(data.queues?.calls || 0)
-        setChatsInQueue(data.queues?.chats || 0)
-      }
-    } catch (error) {
-      console.error("Failed to fetch agent status:", error)
-    }
-  }, [user])
+  // Static demo values for queue counts
+  const [callsInQueue] = useState(0)
+  const [chatsInQueue] = useState(1)
 
   useEffect(() => {
     // Check if user is authenticated
@@ -66,30 +49,12 @@ export default function AgentDesktopPage() {
     // Non-agents should not access agent desktop - redirect to inbox
     router.push("/inbox")
     return
-
-    setIsLoading(false)
-    
-    // Fetch initial agent status and queue counts
-    fetchAgentStatus()
-
-    // Poll for queue updates every 30 seconds
-    const interval = setInterval(fetchAgentStatus, 30000)
-    return () => clearInterval(interval)
-  }, [user, role, router, fetchAgentStatus])
+  }, [user, role, router])
 
   // Handle status changes
-  const handleStatusChange = async (newStatus: "ready" | "busy" | "break" | "offline") => {
+  const handleStatusChange = (newStatus: "ready" | "busy" | "break" | "offline") => {
+    // Update local state only (UI-only, no API call)
     setAgentStatus(newStatus)
-    try {
-      const agentId = user?.id || "1"
-      await fetch("/api/agents/status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentId, status: newStatus }),
-      })
-    } catch (error) {
-      console.error("Failed to update agent status:", error)
-    }
   }
 
   // Handle auto-accept toggle

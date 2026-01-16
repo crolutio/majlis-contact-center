@@ -1,6 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+/**
+ * Agent status is managed in local state only (UI-only).
+ * The /api/agents/status route has been removed as part of the FastAPI-only backend migration.
+ * Status dropdown changes UI appearance but does not persist to database.
+ */
+
+import { useState, useEffect } from "react"
 import { ChatAgentDesktop } from "@/components/chat-agent-desktop"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
@@ -13,27 +19,6 @@ export default function ChatAgentPage() {
   const [agentStatus, setAgentStatus] = useState<"ready" | "busy" | "break" | "offline">("ready")
   const [autoAccept, setAutoAccept] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
-  const fetchAgentStatus = useCallback(async () => {
-    if (!user) return
-    
-    try {
-      const agentId = user.id || "1"
-      const response = await fetch(`/api/agents/status?agentId=${agentId}`)
-      if (response.ok) {
-        const data = await response.json()
-        const statusMap: Record<string, "ready" | "busy" | "break" | "offline"> = {
-          online: "ready",
-          busy: "busy",
-          away: "break",
-          offline: "offline",
-        }
-        setAgentStatus(statusMap[data.agent?.status] || "ready")
-      }
-    } catch (error) {
-      console.error("Failed to fetch agent status:", error)
-    }
-  }, [user])
 
   useEffect(() => {
     // Check if user is authenticated and has chat agent permissions
@@ -49,25 +34,11 @@ export default function ChatAgentPage() {
     }
 
     setIsLoading(false)
-    fetchAgentStatus()
+  }, [user, role, router])
 
-    // Poll for status updates every 30 seconds
-    const interval = setInterval(fetchAgentStatus, 30000)
-    return () => clearInterval(interval)
-  }, [user, role, router, fetchAgentStatus])
-
-  const handleStatusChange = async (newStatus: "ready" | "busy" | "break" | "offline") => {
+  const handleStatusChange = (newStatus: "ready" | "busy" | "break" | "offline") => {
+    // Update local state only (UI-only, no API call)
     setAgentStatus(newStatus)
-    try {
-      const agentId = user?.id || "1"
-      await fetch("/api/agents/status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ agentId, status: newStatus }),
-      })
-    } catch (error) {
-      console.error("Failed to update agent status:", error)
-    }
   }
 
   const handleAutoAcceptToggle = () => {

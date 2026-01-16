@@ -40,6 +40,8 @@ import { knowledgeBaseSuggestions } from "@/lib/sample-data"
 import { CallAnalysisDisplay } from "@/components/calls/call-analysis-display"
 import { useRouter } from "next/navigation"
 import type { CallAnalysisRow } from "@/lib/automation/types"
+import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
+import type { DbMessage } from "@/lib/types"
 
 const channelIcons = {
   voice: Phone,
@@ -61,6 +63,36 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
   const [callAnalysis, setCallAnalysis] = useState<CallAnalysisRow | null>(null)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
   const router = useRouter()
+  
+  // Demo agent ID - replace with real agent ID from context/store
+  const agentId = "00000000-0000-0000-0000-000000000001" // TODO: Get from auth context
+
+  // Use realtime hook for messages
+  const { messages: dbMessages, send: sendMessage } = useConversationMessages({
+    conversationId: conversation?.id ?? null,
+    agentId,
+  })
+
+  // Convert DbMessage to Message format for rendering
+  const convertDbMessageToMessage = (msg: DbMessage): Message => {
+    const isAgent = msg.sender_type === "agent"
+    const isInternal = isAgent && msg.is_internal
+
+    return {
+      id: msg.id,
+      type: msg.sender_type === "customer" ? "customer" : isInternal ? "agent" : "agent",
+      content: msg.content,
+      timestamp: new Date(msg.created_at),
+      sentiment: undefined, // Can be added if available in DB
+      confidence: undefined,
+      isTranscript: false,
+    }
+  }
+
+  // Use real messages from DB if available, otherwise fall back to conversation.messages
+  const messages = conversation?.id && dbMessages.length > 0
+    ? dbMessages.map(convertDbMessageToMessage)
+    : conversation?.messages || []
   
   // Check if conversation is AI-handled (messages should be blocked)
   const isAIHandled = conversation && getHandlingStatus(conversation) === 'ai-handled'
@@ -353,7 +385,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6">{conversation.messages.map(renderMessage)}</div>
+        <div className="flex-1 overflow-y-auto p-6">{messages.map(renderMessage)}</div>
 
         {/* AI Suggestion - Hidden for AI-handled conversations */}
         {!isAIHandled && (
@@ -433,6 +465,15 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
                     placeholder="Type your message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        const trimmed = message.trim()
+                        if (trimmed && conversation?.id) {
+                          sendMessage(trimmed, false).then(() => setMessage("")).catch(console.error)
+                        }
+                      }
+                    }}
                     className="min-h-[80px] resize-none"
                   />
                 </div>
@@ -469,7 +510,21 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
                     <CheckCircle className="h-4 w-4 mr-1" />
                     Wrap-up
                   </Button>
-                  <Button size="sm">
+                  <Button 
+                    size="sm"
+                    onClick={async () => {
+                      const trimmed = message.trim()
+                      if (!trimmed || !conversation?.id) return
+                      
+                      try {
+                        await sendMessage(trimmed, false) // isInternal = false for regular messages
+                        setMessage("")
+                      } catch (error) {
+                        console.error("Failed to send message:", error)
+                        // Optionally show error toast
+                      }
+                    }}
+                  >
                     <Send className="h-4 w-4 mr-1" />
                     Send
                   </Button>
