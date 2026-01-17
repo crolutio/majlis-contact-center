@@ -30,191 +30,9 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
-
-const conversationData = {
-  1: {
-    customerName: "Maria Gonzalez",
-    dni: "45.678.912",
-    loyaltyStatus: "Gold Member",
-    channel: "whatsapp",
-    channelIcon: "💬",
-    channelColor: "green",
-    products: [
-      { name: "Premium Fiber 1Gb", id: "FIB-1GB-2024", renewal: "Mar 15, 2025", status: "Active" },
-      { name: "TV Premium Package", id: "TV-PREM-2024", renewal: "Jan 8, 2025", status: "Expiring" },
-    ],
-    history: [
-      { date: "Dec 18", channel: "WhatsApp", summary: "Billing inquiry resolved" },
-      { date: "Dec 10", channel: "Webchat", summary: "Router configuration help" },
-      { date: "Nov 28", channel: "Voice", summary: "Service upgrade completed" },
-    ],
-    messages: [
-      {
-        id: 1,
-        sender: "customer",
-        type: "text",
-        content: "Hi! I wanted to check on my order status.",
-        timestamp: "10:32 AM",
-      },
-      {
-        id: 2,
-        sender: "agent",
-        type: "text",
-        content: "Hello Maria! I'd be happy to help you with that. Let me check your order details.",
-        timestamp: "10:32 AM",
-      },
-      {
-        id: 3,
-        sender: "customer",
-        type: "text",
-        content: "Thank you! Order number is ORD-2024-1547",
-        timestamp: "10:33 AM",
-      },
-      {
-        id: 4,
-        sender: "customer",
-        type: "image",
-        content: "/broken-router-with-red-lights.jpg",
-        caption: "Also, my router has been showing red lights",
-        timestamp: "10:33 AM",
-      },
-      {
-        id: 5,
-        sender: "agent",
-        type: "text",
-        content:
-          "I can see your order is currently in transit and scheduled for delivery by December 24th. Regarding the router issue, the red lights typically indicate a connection problem. Let me guide you through some troubleshooting steps.",
-        timestamp: "10:34 AM",
-      },
-      {
-        id: 6,
-        sender: "customer",
-        type: "image",
-        content: "/billing-invoice-statement-document.jpg",
-        caption: "I also received this invoice",
-        timestamp: "10:35 AM",
-      },
-    ],
-    smartReplies: [
-      "Your order is on track for delivery by Dec 24th",
-      "I can help you track that right away",
-      "Let me check your account details",
-    ],
-  },
-  2: {
-    customerName: "Carlos Rodriguez",
-    dni: "38.456.789",
-    loyaltyStatus: "Silver Member",
-    channel: "instagram",
-    channelIcon: "📷",
-    channelColor: "pink",
-    products: [{ name: "Basic Fiber 300Mb", id: "FIB-300-2024", renewal: "Feb 20, 2025", status: "Active" }],
-    history: [
-      { date: "Dec 15", channel: "Instagram", summary: "Payment plan setup" },
-      { date: "Nov 22", channel: "Voice", summary: "Technical support" },
-    ],
-    messages: [
-      {
-        id: 1,
-        sender: "customer",
-        type: "text",
-        content: "Hello, I need help understanding my bill",
-        timestamp: "10:28 AM",
-      },
-      {
-        id: 2,
-        sender: "agent",
-        type: "text",
-        content: "Hi Carlos! I'm here to help. Let me pull up your billing information.",
-        timestamp: "10:29 AM",
-      },
-      { id: 3, sender: "customer", type: "text", content: "There's a charge I don't recognize", timestamp: "10:29 AM" },
-    ],
-    smartReplies: [
-      "Let me review your recent charges",
-      "I can break down each line item for you",
-      "Would you like to set up a payment plan?",
-    ],
-  },
-  3: {
-    customerName: "Sofia Martinez",
-    dni: "42.123.456",
-    loyaltyStatus: "Bronze Member",
-    channel: "webchat",
-    channelIcon: "💻",
-    channelColor: "blue",
-    products: [
-      { name: "Standard Fiber 500Mb", id: "FIB-500-2024", renewal: "Apr 10, 2025", status: "Active" },
-      { name: "Mobile Plan Plus", id: "MOB-PLUS-2024", renewal: "Mar 1, 2025", status: "Active" },
-    ],
-    history: [
-      { date: "Dec 12", channel: "Webchat", summary: "Speed test guidance" },
-      { date: "Nov 30", channel: "Email", summary: "Plan comparison requested" },
-    ],
-    messages: [
-      {
-        id: 1,
-        sender: "customer",
-        type: "text",
-        content: "Hi, my internet connection is very slow today",
-        timestamp: "10:22 AM",
-      },
-      {
-        id: 2,
-        sender: "agent",
-        type: "text",
-        content: "Hello Sofia! I'm sorry to hear that. Let me run some diagnostics on your connection.",
-        timestamp: "10:23 AM",
-      },
-      {
-        id: 3,
-        sender: "customer",
-        type: "text",
-        content: "Thank you, it's been like this for 2 hours",
-        timestamp: "10:23 AM",
-      },
-    ],
-    smartReplies: [
-      "Let's run a speed test together",
-      "I'll check for any network issues in your area",
-      "Have you tried restarting your router?",
-    ],
-  },
-  4: {
-    customerName: "Juan Perez",
-    dni: "51.987.654",
-    loyaltyStatus: "Gold Member",
-    channel: "whatsapp",
-    channelIcon: "💬",
-    channelColor: "green",
-    products: [{ name: "Premium Fiber 1Gb", id: "FIB-1GB-2023", renewal: "Jan 28, 2025", status: "Active" }],
-    history: [
-      { date: "Dec 8", channel: "WhatsApp", summary: "Upgrade inquiry" },
-      { date: "Nov 15", channel: "Voice", summary: "Installation scheduled" },
-    ],
-    messages: [
-      {
-        id: 1,
-        sender: "customer",
-        type: "text",
-        content: "Hi! I'm interested in upgrading to a higher tier plan",
-        timestamp: "10:15 AM",
-      },
-      {
-        id: 2,
-        sender: "agent",
-        type: "text",
-        content: "Hello Juan! Great to hear from you. Let me show you our available upgrade options.",
-        timestamp: "10:16 AM",
-      },
-    ],
-    smartReplies: [
-      "We have excellent upgrade options available",
-      "Let me check your eligibility for promotions",
-      "I can schedule an installation visit",
-    ],
-  },
-}
+import { useAuth } from "@/contexts/auth-context"
+import { getConversationDetails, getConversationMessages, type ConversationDetails } from "@/lib/chat-queries"
+import { Loader2 } from "lucide-react"
 
 interface ChatAgentDesktopProps {
   onCloseChat: () => void
@@ -233,24 +51,54 @@ export function ChatAgentDesktop({
   autoAccept,
   onAutoAcceptToggle,
 }: ChatAgentDesktopProps) {
-  // Demo: For now, use numeric IDs but convert to string UUID format for API calls
-  // In production, this would come from real conversation selection
-  const [activeConversationId, setActiveConversationId] = useState<number | string>(1)
-  const activeConvo = typeof activeConversationId === "number" 
-    ? conversationData[activeConversationId as keyof typeof conversationData]
-    : null
+  const { user } = useAuth()
+  const agentId = user?.id || ""
 
-  // Demo agent ID - replace with real agent ID from context/store
-  const agentId = "00000000-0000-0000-0000-000000000001" // TODO: Get from auth context
+  // Use UUID strings for conversation IDs
+  const [activeConversationId, setActiveConversationId] = useState<string>("")
+  const [activeConvo, setActiveConvo] = useState<ConversationDetails | null>(null)
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false)
+  const [conversationError, setConversationError] = useState<string | null>(null)
 
-  // Convert numeric ID to UUID string for API calls, or use string directly
-  const conversationIdForApi = typeof activeConversationId === "string" 
-    ? activeConversationId 
-    : null // For demo mode with numeric IDs, don't use realtime
+  // Fetch conversation details when activeConversationId changes
+  useEffect(() => {
+    async function loadConversation() {
+      if (!activeConversationId) {
+        setActiveConvo(null)
+        return
+      }
 
-  // Use realtime hook only when we have a valid UUID conversation ID
+      setIsLoadingConversation(true)
+      setConversationError(null)
+
+      try {
+        const [details, messages] = await Promise.all([
+          getConversationDetails(activeConversationId),
+          getConversationMessages(activeConversationId),
+        ])
+
+        if (details) {
+          details.messages = messages
+          setActiveConvo(details)
+        } else {
+          setConversationError("Conversation not found")
+          setActiveConvo(null)
+        }
+      } catch (err) {
+        console.error("Failed to load conversation:", err)
+        setConversationError("Failed to load conversation")
+        setActiveConvo(null)
+      } finally {
+        setIsLoadingConversation(false)
+      }
+    }
+
+    loadConversation()
+  }, [activeConversationId])
+
+  // Use realtime hook for message updates
   const { messages: dbMessages, send: sendMessage } = useConversationMessages({
-    conversationId: conversationIdForApi,
+    conversationId: activeConversationId || null,
     agentId,
   })
 
@@ -272,8 +120,8 @@ export function ChatAgentDesktop({
     }
   }
 
-  // Use real messages if available, otherwise fall back to demo data
-  const messages = conversationIdForApi && dbMessages.length > 0
+  // Use realtime messages if available, otherwise use loaded messages
+  const messages = dbMessages.length > 0
     ? dbMessages.map(convertDbMessageToDisplay)
     : activeConvo?.messages || []
 
@@ -332,7 +180,7 @@ export function ChatAgentDesktop({
     if (!trimmed) return
 
     // If we have a real conversation ID, use the API
-    if (conversationIdForApi) {
+    if (activeConversationId) {
       try {
         await sendMessage(trimmed, whisperMode)
         setMessage("") // clear input
@@ -341,16 +189,9 @@ export function ChatAgentDesktop({
         // Optionally show error toast
       }
     } else {
-      // Fallback to demo mode (local only)
-      const newMessage = {
-        id: messages.length + 1,
-        sender: whisperMode ? "whisper" : "agent",
-        type: "text" as const,
-        content: trimmed,
-        timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-      }
+      // If no conversation ID, can't send message
+      console.warn("Cannot send message: no active conversation")
       setMessage("")
-      // Note: In demo mode, messages are not persisted
     }
   }
 
@@ -362,37 +203,16 @@ export function ChatAgentDesktop({
 
   const handleVideoRequest = () => {
     setShowVideoRequest(true)
-    const systemMsg = {
-      id: messages.length + 1,
-      sender: "system" as const,
-      type: "text" as const,
-      content: "🎥 Agent is requesting a secure video session...",
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    }
-    setMessages([...messages, systemMsg])
+    // In demo mode, we just show the UI state. In production, this would send a system message via API.
   }
 
   const handleScreenShareRequest = () => {
     setShowScreenShareRequest(true)
-    const systemMsg = {
-      id: messages.length + 1,
-      sender: "system" as const,
-      type: "text" as const,
-      content: "🖥️ Agent is initiating screen sharing (co-browsing)...",
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    }
-    setMessages([...messages, systemMsg])
+    // In demo mode, we just show the UI state. In production, this would send a system message via API.
   }
 
   const handleTransfer = (department: string) => {
-    const systemMsg = {
-      id: messages.length + 1,
-      sender: "system" as const,
-      type: "text" as const,
-      content: `🔄 Transferring conversation to ${department}...`,
-      timestamp: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
-    }
-    setMessages([...messages, systemMsg])
+    // In demo mode, we just show the UI state. In production, this would send a system message via API.
     setShowTransferDropdown(false)
   }
 
@@ -401,7 +221,19 @@ export function ChatAgentDesktop({
   }
 
   if (showWrapUp) {
-    return <ChatWrapUpView onComplete={onCloseChat} conversationData={activeConvo} />
+    if (!activeConvo) {
+      return null
+    }
+    return (
+      <ChatWrapUpView
+        onComplete={onCloseChat}
+        conversationData={{
+          customerName: activeConvo.customerName,
+          channel: activeConvo.channel,
+          loyaltyStatus: activeConvo.loyaltyStatus || "Standard Banking",
+        }}
+      />
+    )
   }
 
   const suggestedSolutions = [
@@ -589,7 +421,7 @@ export function ChatAgentDesktop({
       <div className="flex flex-1 min-h-0">
         {/* Left: Omni-channel inbox (KB is accessible from the global left sidebar) */}
         <ChatInbox 
-          activeConversationId={typeof activeConversationId === "number" ? activeConversationId : undefined} 
+          activeConversationId={activeConversationId || ""} 
           onConversationSelect={(id) => setActiveConversationId(id)} 
         />
 
@@ -599,7 +431,14 @@ export function ChatAgentDesktop({
           <div className="bg-card border-b border-border px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {activeConvo && (
+                {isLoadingConversation ? (
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Loading conversation...</span>
+                  </div>
+                ) : conversationError ? (
+                  <div className="text-sm text-destructive">{conversationError}</div>
+                ) : activeConvo ? (
                   <>
                     <div
                       className={cn(
@@ -623,6 +462,8 @@ export function ChatAgentDesktop({
                       <p className="text-xs text-muted-foreground capitalize">{activeConvo.channel} • Active</p>
                     </div>
                   </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Select a conversation to start</div>
                 )}
               </div>
               {/* Transfer button also available in chat header for convenience */}
@@ -870,7 +711,7 @@ export function ChatAgentDesktop({
                     <p className="font-semibold text-sm text-foreground">{activeConvo?.dni || "N/A"}</p>
                     {activeConvo?.dni && (
                       <button
-                        onClick={() => copyToClipboard(activeConvo.dni.replace(/\./g, ""), "dni")}
+                        onClick={() => copyToClipboard(activeConvo.dni!.replace(/\./g, ""), "dni")}
                         className="text-muted-foreground hover:text-foreground transition-colors"
                         title="Copy to clipboard"
                       >

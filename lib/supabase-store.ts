@@ -617,6 +617,9 @@ export async function createConversationFromCall(call: StoredCall): Promise<stri
     }
 
     // Create conversation
+    // Default agent ID for testing purposes
+    const DEFAULT_AGENT_ID = "e66fa391-28b5-44ec-b3a9-4397c2f2d225";
+    
     const { data, error } = await supabase
       .from('conversations')
       .insert({
@@ -631,6 +634,7 @@ export async function createConversationFromCall(call: StoredCall): Promise<stri
         sla_remaining: 30,
         sla_status: 'healthy',
         assigned_to: call.agentId || null,
+        assigned_agent_id: DEFAULT_AGENT_ID,
         queue: 'General Support',
         topic: call.topic || 'Incoming Call',
         last_message: 'Call in progress',

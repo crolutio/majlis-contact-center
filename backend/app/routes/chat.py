@@ -35,17 +35,28 @@ def _ensure_data(res, err_msg: str):
 
 @router.post("/conversations")
 def create_conversation(body: CreateConversationRequest):
+    # Default agent ID for testing purposes
+    DEFAULT_AGENT_ID = "e66fa391-28b5-44ec-b3a9-4397c2f2d225"
+    
     payload = {
         "customer_id": body.customer_id,
         "subject": body.subject,
         "channel": body.channel,
         "priority": body.priority,
         "status": "open",
+        "assigned_agent_id": DEFAULT_AGENT_ID,
     }
+    
+    print(f"[backend] Creating conversation with payload: {payload}")
+    print(f"[backend] assigned_agent_id: {DEFAULT_AGENT_ID}")
 
     res = supabase().table("conversations").insert(payload).execute()
     data = _ensure_data(res, "Failed to create conversation")
-    return data[0]
+    
+    created_conversation = data[0]
+    print(f"[backend] Conversation created: id={created_conversation.get('id')}, assigned_agent_id={created_conversation.get('assigned_agent_id')}")
+    
+    return created_conversation
 
 
 @router.get("/conversations/{conversation_id}/messages")

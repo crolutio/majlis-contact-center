@@ -857,6 +857,9 @@ export async function createBankingConversationFromVoiceCall(params: {
     }
 
     // D) Create conversation
+    // Default agent ID for testing purposes
+    const DEFAULT_AGENT_ID = "e66fa391-28b5-44ec-b3a9-4397c2f2d225";
+    
     const { data: created, error } = await supabase
       .from('cc_conversations')
       .insert({
@@ -871,6 +874,7 @@ export async function createBankingConversationFromVoiceCall(params: {
         topic: 'Inbound Voice Call',
         sentiment: 'neutral',
         updated_at: openedAt,
+        assigned_agent_id: DEFAULT_AGENT_ID,
       })
       .select('id')
       .single();

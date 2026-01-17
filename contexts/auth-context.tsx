@@ -25,8 +25,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const demoUsers: Record<UserRole, User> = {
   agent: {
-    id: "1",
-    name: "Sarah Chen",
+    id: "e66fa391-28b5-44ec-b3a9-4397c2f2d225",
+    name: "Omar Al-Farsi",
     email: "sarah.chen@majlisconnect.com",
     role: "agent",
     avatar: "/professional-woman-avatar.png",
