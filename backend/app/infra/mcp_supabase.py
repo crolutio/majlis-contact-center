@@ -45,7 +45,6 @@ def load_mcp_servers(config_path: str | None = None) -> Dict[str, Any]:
 
     servers = config.get("mcpServers", {})
 
-    supabase_anon = os.getenv("SUPABASE_ANON_KEY")
     supabase_pat = os.getenv("SUPABASE_ACCESS_TOKEN")
 
     for name, server in servers.items():
@@ -63,17 +62,11 @@ def load_mcp_servers(config_path: str | None = None) -> Dict[str, Any]:
 
             # Only inject auth for supabase entries
             if "supabase" in name.lower():
-                if supabase_pat:
-                    # Best: your Supabase PAT / access token
-                    server["headers"]["Authorization"] = f"Bearer {supabase_pat}"
-                else:
-                    # If user already put Authorization in mcp.json, normalize it.
-                    existing = server["headers"].get("Authorization", "")
-                    if existing and not existing.startswith("Bearer "):
-                        server["headers"]["Authorization"] = f"Bearer {existing}"
-                    elif not existing and supabase_anon:
-                        # Last resort—often insufficient for hosted MCP
-                        server["headers"]["Authorization"] = f"Bearer {supabase_anon}"
+                if not supabase_pat:
+                    raise RuntimeError(
+                        "SUPABASE_ACCESS_TOKEN is required for MCP Supabase access."
+                    )
+                server["headers"]["Authorization"] = f"Bearer {supabase_pat}"
 
     return servers
 
