@@ -4,3 +4,10 @@ pydantic>=2.6
 pydantic-settings>=2.2
 python-dotenv>=1.0
 supabase>=2.4.0
+langchain
+langchain-community
+langchain-core
+langgraph
+langchain-mcp-adapters
+langchain-groq
+langchain-anthropic

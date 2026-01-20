@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import { useAuth } from "@/contexts/auth-context"
 import { getConversationDetails, getConversationMessages, type ConversationDetails } from "@/lib/chat-queries"
 import { Loader2 } from "lucide-react"
@@ -105,6 +107,8 @@ export function ChatAgentDesktop({
   // Convert DbMessage format to display format
   const convertDbMessageToDisplay = (msg: DbMessage) => {
     const isAgent = msg.sender_type === "agent"
+    const isAI = msg.sender_type === "ai"
+    const isSystem = msg.sender_type === "system"
     const isWhisper = isAgent && msg.is_internal
     const timestamp = new Date(msg.created_at).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -113,17 +117,29 @@ export function ChatAgentDesktop({
 
     return {
       id: msg.id,
-      sender: isWhisper ? "whisper" : isAgent ? "agent" : "customer",
+      sender: isWhisper
+        ? "whisper"
+        : isAI
+          ? "ai"
+          : isAgent
+            ? "agent"
+            : isSystem
+              ? "system"
+              : "customer",
       type: "text" as const,
       content: msg.content,
       timestamp,
     }
   }
 
+  const isHumanHandling = activeConvo?.handlingMode === "human"
+  const displayDbMessages = isHumanHandling ? dbMessages : []
+  const displayFallbackMessages = isHumanHandling ? (activeConvo?.messages || []) : []
+
   // Use realtime messages if available, otherwise use loaded messages
-  const messages = dbMessages.length > 0
-    ? dbMessages.map(convertDbMessageToDisplay)
-    : activeConvo?.messages || []
+  const messages = displayDbMessages.length > 0
+    ? displayDbMessages.map(convertDbMessageToDisplay)
+    : displayFallbackMessages
 
   const [message, setMessage] = useState("")
   const [whisperMode, setWhisperMode] = useState(false)
@@ -254,8 +270,8 @@ export function ChatAgentDesktop({
     },
   ]
 
-  return (
-    <div className="h-full flex flex-col bg-background">
+    return (
+      <div className="h-full min-h-0 flex flex-col bg-background">
       {/* Header */}
       <div className="bg-card border-b border-border sticky top-0 z-30">
         <div className="px-6 py-4">
@@ -512,7 +528,7 @@ export function ChatAgentDesktop({
                   animate={{ opacity: 1, y: 0 }}
                   className={cn(
                     "flex",
-                    msg.sender === "agent" || msg.sender === "whisper"
+                    msg.sender === "agent" || msg.sender === "whisper" || msg.sender === "ai"
                       ? "justify-start"
                       : msg.sender === "system"
                         ? "justify-center"
@@ -527,20 +543,28 @@ export function ChatAgentDesktop({
                     <div
                       className={cn(
                         "max-w-[70%]",
-                        msg.sender === "agent" || msg.sender === "whisper" ? "items-start" : "items-end",
+                        msg.sender === "agent" || msg.sender === "whisper" || msg.sender === "ai"
+                          ? "items-start"
+                          : "items-end",
                       )}
                     >
                       <div
                         className={cn(
                           "rounded-2xl px-4 py-2.5",
                           msg.sender === "agent" && "bg-muted text-foreground rounded-tl-sm",
+                          msg.sender === "ai" && "bg-primary/10 text-foreground rounded-tl-sm border border-primary/20",
                           msg.sender === "whisper" &&
                             "bg-amber-500/10 text-foreground rounded-tl-sm border-2 border-amber-500/30",
                           msg.sender === "customer" && "bg-primary text-primary-foreground rounded-tr-sm",
                         )}
                       >
                         {msg.type === "text" ? (
-                          <p className="text-sm leading-relaxed">{msg.content}</p>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            className="text-sm leading-relaxed whitespace-pre-wrap [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1"
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
                         ) : (
                           <div className="space-y-2">
                             <img
@@ -564,6 +588,11 @@ export function ChatAgentDesktop({
                         {msg.sender === "agent" && (
                           <Badge variant="outline" className="text-xs">
                             You
+                          </Badge>
+                        )}
+                        {msg.sender === "ai" && (
+                          <Badge variant="outline" className="text-xs">
+                            AI
                           </Badge>
                         )}
                         {msg.sender === "whisper" && (

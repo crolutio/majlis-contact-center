@@ -91,6 +91,9 @@ celerybeat.pid
 .spyproject
 .ropeproject
 
+# App logs
+backend/app/logs/
+
 # Cython debug symbols
 cython_debug/
 
