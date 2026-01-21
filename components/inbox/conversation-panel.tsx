@@ -42,6 +42,8 @@ import { useRouter } from "next/navigation"
 import type { CallAnalysisRow } from "@/lib/automation/types"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 const channelIcons = {
   voice: Phone,
@@ -77,10 +79,19 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
   const convertDbMessageToMessage = (msg: DbMessage): Message => {
     const isAgent = msg.sender_type === "agent"
     const isInternal = isAgent && msg.is_internal
+    const isAI = msg.sender_type === "ai"
+
+    const messageType = msg.sender_type === "customer"
+      ? "customer"
+      : isAI
+        ? "ai"
+        : isInternal
+          ? "agent"
+          : "agent"
 
     return {
       id: msg.id,
-      type: msg.sender_type === "customer" ? "customer" : isInternal ? "agent" : "agent",
+      type: messageType,
       content: msg.content,
       timestamp: new Date(msg.created_at),
       sentiment: undefined, // Can be added if available in DB
@@ -239,7 +250,12 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
                 <span className="text-xs text-muted-foreground">Voice Transcript</span>
               </div>
             )}
-            <p className="text-sm">{msg.content}</p>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              className="text-sm leading-relaxed whitespace-pre-wrap [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1"
+            >
+              {msg.content}
+            </ReactMarkdown>
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground">{formatTime(msg.timestamp)}</span>
@@ -266,7 +282,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
 
   return (
     <>
-      <div className="flex-1 flex flex-col bg-background h-full overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col bg-background h-full overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-4">
@@ -385,7 +401,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6">{messages.map(renderMessage)}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">{messages.map(renderMessage)}</div>
 
         {/* AI Suggestion - Hidden for AI-handled conversations */}
         {!isAIHandled && (
