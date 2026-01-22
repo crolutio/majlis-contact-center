@@ -24,9 +24,10 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
         setIsLoading(true);
         setError(null);
 
-        // Use RPC function to get conversations with customers (workaround for schema cache issue)
+        // Use view to get conversations with customers (workaround for schema cache issue)
         const { data: convsWithCustomers, error: fetchError } = await supabase
-          .rpc('get_conversations_with_customers');
+          .from('conversations_with_customers')
+          .select('*');
 
         if (fetchError) {
           console.error('Error fetching conversations:', fetchError);
