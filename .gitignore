@@ -42,7 +42,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - commented out to allow Next.js lib folder
 lib64/
 parts/
 sdist/
