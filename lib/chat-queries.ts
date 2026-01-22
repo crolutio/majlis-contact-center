@@ -137,8 +137,8 @@ export async function getConversationDetails(conversationId: string): Promise<Co
 
     // First check if conversation exists without join
     const { data: basicConversation, error: basicError } = await supabase
-      .from('cc_conversations')
-      .select('id, channel, status, opened_at, bank_customer_id')
+      .from('conversations')
+      .select('id, channel, status, created_at, customer_id')
       .eq('id', conversationId)
       .single();
 
@@ -161,11 +161,11 @@ export async function getConversationDetails(conversationId: string): Promise<Co
 
     // Now get the customer if they exist
     let customer = null;
-    if (basicConversation.bank_customer_id) {
+    if (basicConversation.customer_id) {
       const { data: customerData, error: customerError } = await supabase
-        .from('cc_customers')
+        .from('customers')
         .select('id, name, email, phone')
-        .eq('id', basicConversation.bank_customer_id)
+        .eq('id', basicConversation.customer_id)
         .single();
 
       if (customerError) {
@@ -193,8 +193,8 @@ export async function getConversationDetails(conversationId: string): Promise<Co
       priority: 'medium', // Default
       sentiment: 'neutral', // Default
       sentimentScore: 0.5,
-      created_at: basicConversation.opened_at,
-      updated_at: basicConversation.opened_at,
+      created_at: basicConversation.created_at,
+      updated_at: basicConversation.created_at,
 
       // Additional properties with defaults
       handlingMode: 'ai-assisted',
@@ -224,7 +224,7 @@ export async function getConversationDetails(conversationId: string): Promise<Co
 export async function getConversationMessages(conversationId: string): Promise<DbMessage[]> {
   try {
     const { data: messages, error } = await supabase
-      .from('cc_messages')
+      .from('messages')
       .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
@@ -235,15 +235,15 @@ export async function getConversationMessages(conversationId: string): Promise<D
       return getMockConversationMessages(conversationId);
     }
 
-    // Transform cc_messages to DbMessage format
+    // Transform messages to DbMessage format
     const dbMessages: DbMessage[] = messages.map(msg => ({
       id: msg.id,
       conversation_id: msg.conversation_id,
-      sender_type: msg.direction === 'inbound' ? 'customer' : 'agent', // Simple mapping
-      content: msg.body_text || msg.text || '',
+      sender_type: msg.type === 'customer' ? 'customer' : 'agent', // Use type field directly
+      content: msg.content || '',
       created_at: msg.created_at,
       is_internal: false, // Default to false
-      metadata: msg.metadata || {},
+      metadata: {},
     }));
 
     return dbMessages;
@@ -260,19 +260,13 @@ export async function sendMessage(
   isInternal: boolean = false
 ): Promise<DbMessage | null> {
   try {
-    const direction = senderType === 'customer' ? 'inbound' : 'outbound';
-
     const { data: message, error } = await supabase
-      .from('cc_messages')
+      .from('messages')
       .insert({
         conversation_id: conversationId,
-        direction,
-        channel: 'chat', // Default to chat for now
-        body_text: content,
-        metadata: {
-          sender_type: senderType,
-          is_internal: isInternal,
-        },
+        type: senderType,
+        content: content,
+        timestamp: new Date().toISOString(),
       })
       .select()
       .single();
@@ -287,10 +281,10 @@ export async function sendMessage(
       id: message.id,
       conversation_id: message.conversation_id,
       sender_type: senderType,
-      content: message.body_text,
+      content: message.content,
       created_at: message.created_at,
       is_internal: isInternal,
-      metadata: message.metadata || {},
+      metadata: {},
     };
 
     return dbMessage;
