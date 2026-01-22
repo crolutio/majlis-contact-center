@@ -43,7 +43,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
               body_text
             )
           `)
-          .in('status', ['open', 'pending', 'active', 'waiting'])
+          .in('status', ['active', 'waiting'])
           .order('opened_at', { ascending: false });
 
         if (fetchError) {
