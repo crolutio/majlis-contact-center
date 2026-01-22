@@ -163,8 +163,8 @@ export async function getConversationDetails(conversationId: string): Promise<Co
     let customer = null;
     if (basicConversation.bank_customer_id) {
       const { data: customerData, error: customerError } = await supabase
-        .from('cc_bank_customers')
-        .select('id, first_name, last_name, email, phone')
+        .from('cc_customers')
+        .select('id, name, email, phone')
         .eq('id', basicConversation.bank_customer_id)
         .single();
 
@@ -180,7 +180,7 @@ export async function getConversationDetails(conversationId: string): Promise<Co
       id: basicConversation.id,
       customer: {
         id: customer?.id || conversationId,
-        name: customer ? `${customer.first_name} ${customer.last_name}` : 'Unknown Customer',
+        name: customer?.name || 'Unknown Customer',
         email: customer?.email || '',
         phone: customer?.phone || '',
         avatar: '/placeholder-user.jpg',
@@ -198,7 +198,7 @@ export async function getConversationDetails(conversationId: string): Promise<Co
 
       // Additional properties with defaults
       handlingMode: 'ai-assisted',
-      customerName: customer ? `${customer.first_name} ${customer.last_name}` : 'Unknown Customer',
+      customerName: customer?.name || 'Unknown Customer',
       loyaltyStatus: 'standard',
       channelColor: getChannelColor(basicConversation.channel),
       smartReplies: [

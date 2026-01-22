@@ -36,13 +36,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             priority,
             topic,
             sentiment,
-            cc_bank_customers (
-              id,
-              first_name,
-              last_name,
-              email,
-              phone
-            ),
+            bank_customer_id,
             cc_messages (
               id,
               created_at,
@@ -58,9 +52,21 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
           return;
         }
 
+        // Fetch customers for conversations with bank_customer_id
+        const customerIds = convs
+          .filter((c: any) => c.bank_customer_id)
+          .map((c: any) => c.bank_customer_id);
+        
+        const { data: customers } = await supabase
+          .from('cc_customers')
+          .select('id, name, email, phone')
+          .in('id', customerIds);
+
+        const customerMap = new Map(customers?.map(c => [c.id, c]) || []);
+
         // Transform to Conversation format with ChatInbox expected fields
         const transformedConversations: any[] = convs.map((conv: any) => {
-          const customer = conv.cc_bank_customers;
+          const customer = conv.bank_customer_id ? customerMap.get(conv.bank_customer_id) : null;
           const messages = conv.cc_messages || [];
           const lastMessage = messages.length > 0
             ? messages.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
@@ -69,7 +75,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
           // Calculate time in queue (minutes since opened)
           const timeInQueue = Math.floor((Date.now() - new Date(conv.opened_at).getTime()) / (1000 * 60));
 
-          const customerName = customer ? `${customer.first_name} ${customer.last_name}`.trim() : 'Unknown Customer';
+          const customerName = customer?.name || 'Unknown Customer';
 
           return {
             id: conv.id,
