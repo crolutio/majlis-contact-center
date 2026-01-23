@@ -76,7 +76,9 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             : null;
 
           // Calculate time in queue (minutes since start_time)
-          const timeInQueue = Math.floor((Date.now() - new Date(conv.start_time).getTime()) / (1000 * 60));
+          // Handle null/undefined start_time to prevent NaN
+          const startTime = conv.start_time ? new Date(conv.start_time).getTime() : Date.now();
+          const timeInQueue = Math.floor((Date.now() - startTime) / (1000 * 60));
 
           const customer = conv.customer || {};
           const customerName = customer.name || customer.email || 'Unknown Customer';
@@ -95,7 +97,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             },
             // Additional fields expected by ChatInbox
             customerName,
-            timeInQueue: `${timeInQueue}m`,
+            timeInQueue: isNaN(timeInQueue) ? '0m' : `${timeInQueue}m`,
             channel: conv.channel,
             status: conv.status,
             priority: conv.priority || 'medium',
@@ -111,7 +113,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             topic: conv.topic || '',
             lastMessage: lastMessage?.content || conv.last_message || '',
             lastMessageTime: lastMessage ? new Date(lastMessage.created_at) : new Date(conv.last_message_time || conv.start_time),
-            startTime: new Date(conv.start_time),
+            startTime: new Date(conv.start_time || Date.now()),
             messages: messages.map((msg: any) => ({
               id: msg.id,
               type: 'customer', // Default, would need more logic
