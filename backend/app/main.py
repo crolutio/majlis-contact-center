@@ -74,8 +74,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health_router, prefix="/api", tags=["health"])
-app.include_router(chat_router, prefix="/api", tags=["chat"])
+app.include_router(health_router, tags=["health"])
+app.include_router(chat_router, tags=["chat"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
