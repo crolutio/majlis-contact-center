@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import type { Conversation } from '../sample-data';
+import { getHandlingStatus } from '../conversation-handling';
 
 interface UseAgentInboxReturn {
   conversations: (Conversation & { customerName: string; timeInQueue: string })[];
@@ -110,7 +111,16 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
         });
 
         console.log('[useAgentInbox] Transformed conversations:', transformedConversations.length);
-        setConversations(transformedConversations);
+
+        // Filter to only show conversations that need human attention (escalated or assigned)
+        // Hide AI-handled conversations until customer escalates
+        const escalatedConversations = transformedConversations.filter((conv: any) => {
+          const handlingStatus = getHandlingStatus(conv);
+          return handlingStatus !== 'ai-handled';
+        });
+
+        console.log('[useAgentInbox] Filtered to escalated conversations:', escalatedConversations.length);
+        setConversations(escalatedConversations);
       } catch (err) {
         console.error('[useAgentInbox] Error in fetchConversations:', err);
         setError(`Failed to load conversations: ${err instanceof Error ? err.message : 'Unknown error'}`);

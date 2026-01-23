@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { cn, formatConversationTime } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
@@ -93,19 +93,8 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
   }
 
   const formatTime = (date: Date | string | null | undefined) => {
-    const dateObj = parseTimestamp(date)
-    if (!dateObj) {
-      return 'Unknown time'
-    }
-    
-    const now = new Date()
-    const diff = now.getTime() - dateObj.getTime()
-    const minutes = Math.floor(diff / 60000)
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`
-    return dateObj.toLocaleDateString()
+    const formatted = formatConversationTime(date)
+    return formatted || 'Unknown time'
   }
 
   return (
