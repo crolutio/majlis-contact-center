@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, AliasChoices
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -12,7 +12,14 @@ load_dotenv(ENV_FILE)
 
 class Settings(BaseSettings):
     supabase_url: str = Field(..., alias="SUPABASE_URL")
-    supabase_service_role_key: str = Field(..., alias="SUPABASE_SERVICE_ROLE_KEY")
+    supabase_service_role_key: str = Field(
+        ...,
+        validation_alias=AliasChoices(
+            "SUPABASE_SERVICE_ROLE_KEY",
+            "SUPABASE_SERVICE_KEY",
+            "SUPABASE_KEY",
+        ),
+    )
     cors_origins: str = Field("http://localhost:3000", alias="CORS_ORIGINS")
 
     @property
