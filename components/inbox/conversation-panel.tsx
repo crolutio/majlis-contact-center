@@ -173,7 +173,8 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
     )
   }
 
-  const ChannelIcon = channelIcons[conversation.channel]
+  const channelKey = conversation.channel && channelIcons[conversation.channel] ? conversation.channel : "chat"
+  const ChannelIcon = channelIcons[channelKey]
 
   const formatTime = (date: Date | string) => {
     // Handle both Date objects and date strings (from API)

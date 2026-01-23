@@ -105,8 +105,11 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
-          const ChannelIcon = channelIcons[conversation.channel]
-          const SentimentIcon = sentimentIcons[conversation.sentiment]
+          const channelKey = conversation.channel && channelIcons[conversation.channel] ? conversation.channel : "chat"
+          const sentimentKey =
+            conversation.sentiment && sentimentIcons[conversation.sentiment] ? conversation.sentiment : "neutral"
+          const ChannelIcon = channelIcons[channelKey]
+          const SentimentIcon = sentimentIcons[sentimentKey]
 
           return (
             <button
@@ -140,7 +143,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                   <div
                     className={cn(
                       "absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center",
-                      channelColors[conversation.channel],
+                      channelColors[channelKey],
                     )}
                   >
                     <ChannelIcon className="h-2.5 w-2.5 text-white" />
