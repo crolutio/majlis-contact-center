@@ -5,6 +5,7 @@ import type React from "react"
 import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
+import { canAccessRoute, getDefaultRouteForRole } from "@/lib/permissions"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { AppHeader } from "@/components/layout/app-header"
 
@@ -13,7 +14,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -25,6 +26,13 @@ export default function DashboardLayout({
       router.push("/login")
     }
   }, [isAuthenticated, router])
+
+  useEffect(() => {
+    if (!user || !pathname) return
+    if (!canAccessRoute(user.role, pathname)) {
+      router.push(getDefaultRouteForRole(user.role))
+    }
+  }, [user, pathname, router])
 
   if (!isAuthenticated) {
     return null

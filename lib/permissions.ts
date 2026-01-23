@@ -115,3 +115,42 @@ export function canAccessRoute(role: UserRole, route: string): boolean {
 
   return requiredPermissions.some((p) => hasPermission(role, p))
 }
+
+const roleDefaultRoutes: Record<UserRole, string[]> = {
+  agent: ["/chat-agent", "/call-agent", "/knowledge"],
+  call_agent: ["/call-agent", "/chat-agent", "/knowledge"],
+  supervisor: [
+    "/inbox",
+    "/live-console",
+    "/analytics",
+    "/quality",
+    "/reports",
+    "/knowledge",
+    "/workflows",
+    "/agent-builder",
+    "/integrations",
+    "/automation",
+    "/settings",
+  ],
+  admin: [
+    "/inbox",
+    "/analytics",
+    "/reports",
+    "/quality",
+    "/live-console",
+    "/knowledge",
+    "/workflows",
+    "/agent-builder",
+    "/integrations",
+    "/automation",
+    "/settings",
+  ],
+  analyst: ["/analytics", "/reports", "/quality", "/inbox", "/knowledge"],
+  back_office: ["/back-office", "/knowledge"],
+}
+
+export function getDefaultRouteForRole(role: UserRole): string {
+  const routes = roleDefaultRoutes[role] ?? ["/inbox"]
+  const firstAllowed = routes.find((route) => canAccessRoute(role, route))
+  return firstAllowed ?? "/inbox"
+}

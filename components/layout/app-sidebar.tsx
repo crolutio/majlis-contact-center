@@ -22,7 +22,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth, type UserRole } from "@/contexts/auth-context"
-import { canAccessRoute } from "@/lib/permissions"
+import { canAccessRoute, getDefaultRouteForRole } from "@/lib/permissions"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MajlisConnectLogo } from "@/components/brand/majlis-connect-logo"
 import {
@@ -95,20 +95,6 @@ export function AppSidebar() {
   const { user, switchRole, logout } = useAuth()
 
   if (!user) return null
-
-  const getDefaultRouteForRole = (role: UserRole) => {
-    const navigation =
-      role === "back_office"
-        ? backOfficeNavigation
-        : role === "agent"
-        ? chatAgentNavigation
-        : role === "call_agent"
-          ? callAgentNavigation
-          : baseNavigation
-
-    const firstAllowed = navigation.find((item) => canAccessRoute(role, item.href))
-    return firstAllowed?.href ?? "/inbox"
-  }
 
   const handleRoleSwitch = (role: UserRole) => {
     switchRole(role)
