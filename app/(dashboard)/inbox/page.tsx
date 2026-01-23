@@ -192,6 +192,13 @@ export default function InboxPage() {
     
     let filtered = filterByHandlingStatus(allFetchedConversations, selectedHandlingStatus);
     
+    // Only show conversations after handover is complete (when handling_mode = "human")
+    filtered = filtered.filter((conv) => {
+      const handlingMode = conv.metadata?.handlingMode
+      if (!handlingMode) return true
+      return handlingMode === "human"
+    })
+    
     // Apply queue filter
     if (selectedQueue !== "all") {
       filtered = filtered.filter(conv => {

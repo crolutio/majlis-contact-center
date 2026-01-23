@@ -77,6 +77,18 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
     channel: conversation?.channel,
   })
 
+  const parseTimestamp = (value: Date | string | null | undefined) => {
+    if (!value) return null
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed
+  }
+
+  const getTimestampMs = (value: Date | string | null | undefined) => {
+    const parsed = parseTimestamp(value)
+    return parsed ? parsed.getTime() : Number.MAX_SAFE_INTEGER
+  }
+
   // Convert DbMessage to Message format for rendering
   const convertDbMessageToMessage = (msg: DbMessage): Message => {
     const isAgent = msg.sender_type === "agent"
@@ -91,11 +103,15 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
           ? "agent"
           : "agent"
 
+    const timestampValue =
+      msg.created_at || msg.metadata?.created_at || msg.metadata?.timestamp || msg.metadata?.time
+    const timestamp = parseTimestamp(timestampValue) ?? new Date(0)
+
     return {
       id: msg.id,
       type: messageType,
       content: msg.content,
-      timestamp: new Date(msg.created_at),
+      timestamp,
       sentiment: undefined, // Can be added if available in DB
       confidence: undefined,
       isTranscript: false,
@@ -106,6 +122,12 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
   const messages = conversation?.id && dbMessages.length > 0
     ? dbMessages.map(convertDbMessageToMessage)
     : conversation?.messages || []
+  const sortedMessages = messages
+    .map((msg) => ({
+      ...msg,
+      timestamp: parseTimestamp(msg.timestamp) ?? new Date(0),
+    }))
+    .sort((a, b) => getTimestampMs(a.timestamp) - getTimestampMs(b.timestamp))
   
   // Check if conversation is AI-handled (messages should be blocked)
   const isAIHandled = conversation && getHandlingStatus(conversation) === 'ai-handled'
@@ -181,8 +203,8 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
     const dateObj = typeof date === 'string' ? new Date(date) : date
     
     // Check if date is valid
-    if (!dateObj || isNaN(dateObj.getTime())) {
-      return 'Just now'
+    if (!dateObj || isNaN(dateObj.getTime()) || dateObj.getTime() === 0) {
+      return 'Unknown time'
     }
     
     return dateObj.toLocaleTimeString("en-US", {
@@ -404,7 +426,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
         )}
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">{messages.map(renderMessage)}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">{sortedMessages.map(renderMessage)}</div>
 
         {/* AI Suggestion - Hidden for AI-handled conversations */}
         {!isAIHandled && (

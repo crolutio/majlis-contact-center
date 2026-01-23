@@ -476,6 +476,8 @@ export async function getAllConversations(industry?: string): Promise<Conversati
       tags: conv.tags || [],
       metadata: {
         source: conv.source || conv.industry || 'default',
+        handlingMode: conv.handling_mode || null,
+        handoverRequired: conv.handover_required ?? null,
       },
     };
   });
@@ -537,6 +539,8 @@ export async function getConversation(id: string): Promise<Conversation | null> 
     tags: data.tags || [],
     metadata: {
       source: data.source || data.industry || 'default',
+      handlingMode: data.handling_mode || null,
+      handoverRequired: data.handover_required ?? null,
     },
   };
 }
