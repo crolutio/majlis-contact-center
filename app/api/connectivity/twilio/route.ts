@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     TWILIO_AUTH_TOKEN: !!process.env.TWILIO_AUTH_TOKEN,
     TWILIO_PHONE_NUMBER: !!process.env.TWILIO_PHONE_NUMBER,
     TWILIO_WHATSAPP_NUMBER: !!process.env.TWILIO_WHATSAPP_NUMBER,
-    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SUPABASE_CONTACT_CENTER_SECRET_KEY: !!process.env.SUPABASE_CONTACT_CENTER_SECRET_KEY,
     NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
   }
 
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
   }
 
   // If Supabase server creds are missing, skip DB reads but still return URLs + env status.
-  if (!env.SUPABASE_SERVICE_ROLE_KEY || !env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (!env.SUPABASE_CONTACT_CENTER_SECRET_KEY || !env.NEXT_PUBLIC_SUPABASE_URL) {
     return NextResponse.json({
       success: true,
       env,

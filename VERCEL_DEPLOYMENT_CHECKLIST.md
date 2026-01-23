@@ -17,7 +17,7 @@ Quick checklist for deploying to Vercel with public demo access.
 - [ ] All environment variables added:
   - [ ] `NEXT_PUBLIC_SUPABASE_URL`
   - [ ] `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
-  - [ ] `SUPABASE_SERVICE_ROLE_KEY`
+  - [ ] `SUPABASE_CONTACT_CENTER_SECRET_KEY`
   - [ ] `USE_SUPABASE=true`
   - [ ] `TWILIO_ACCOUNT_SID` (for phone/WhatsApp)
   - [ ] `TWILIO_AUTH_TOKEN` (for phone/WhatsApp)

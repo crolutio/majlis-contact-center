@@ -26,10 +26,10 @@ import { createClient } from '@supabase/supabase-js';
 
 // Get Supabase credentials from environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_CONTACT_CENTER_SECRET_KEY || '';
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn('Supabase service role key not configured. Please set SUPABASE_SERVICE_ROLE_KEY in your .env.local file.');
+  console.warn('Supabase service role key not configured. Please set SUPABASE_CONTACT_CENTER_SECRET_KEY in your .env.local file.');
 }
 
 // Create Supabase client with service role key (bypasses RLS)
@@ -242,7 +242,7 @@ const supabase = supabaseServer; // Use server client for all operations
 
 Add to `.env.local`:
 ```
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+SUPABASE_CONTACT_CENTER_SECRET_KEY=your_service_role_key_here
 ```
 
 Get the service role key from Supabase Dashboard → Settings → API → Service Role Key

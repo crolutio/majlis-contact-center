@@ -257,39 +257,85 @@ export async function sendMessage(
   conversationId: string,
   content: string,
   senderType: 'customer' | 'agent' | 'ai' | 'system' = 'agent',
-  isInternal: boolean = false
+  isInternal: boolean = false,
+  agentId?: string
 ): Promise<DbMessage | null> {
   try {
-    const { data: message, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: conversationId,
-        sender_type: senderType,
-        content: content,
-        is_internal: isInternal,
-      })
-      .select()
-      .single();
+    // Call backend API endpoint instead of directly inserting into Supabase
+    const apiBase = process.env.NEXT_PUBLIC_SUPPORT_API_BASE_URL || 'http://localhost:8000';
+    // Backend route is at /messages (FastAPI router)
+    const endpoint = `${apiBase}/messages`;
+    
+    const requestBody = {
+      conversation_id: conversationId,
+      sender_type: senderType,
+      content: content,
+      is_internal: isInternal,
+    };
 
-    if (error) {
-      console.error('Error sending message:', error);
+    // Add sender IDs based on sender type
+    if (senderType === 'customer') {
+      // For customer messages, sender_customer_id should be provided separately
+      // For now, we'll leave it null if not provided
+      (requestBody as any).sender_customer_id = null;
+      (requestBody as any).sender_agent_id = null;
+    } else {
+      // For agent/ai/system messages, sender_agent_id is required
+      (requestBody as any).sender_agent_id = agentId || null;
+      (requestBody as any).sender_customer_id = null;
+    }
+
+    console.log('[sendMessage] Calling backend API:', { endpoint, requestBody });
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      let errorText: string;
+      try {
+        errorText = await response.text();
+      } catch {
+        errorText = `HTTP ${response.status} ${response.statusText}`;
+      }
+      console.error('Error sending message:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        endpoint,
+      });
       return null;
     }
 
-    // Transform to DbMessage format
+    const message = await response.json();
+    console.log('[sendMessage] Backend response:', message);
+
+    // Transform backend response to DbMessage format
     const dbMessage: DbMessage = {
       id: message.id,
       conversation_id: message.conversation_id,
-      sender_type: senderType,
+      sender_type: message.sender_type || senderType,
       content: message.content,
       created_at: message.created_at,
-      is_internal: isInternal,
+      is_internal: message.is_internal || isInternal,
       metadata: {},
     };
 
     return dbMessage;
   } catch (error) {
     console.error('Error in sendMessage:', error);
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+    }
     return null;
   }
 }

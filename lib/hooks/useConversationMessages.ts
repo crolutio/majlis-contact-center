@@ -37,7 +37,9 @@ export function useConversationMessages({
       setError(null);
 
       try {
+        console.log('[useConversationMessages] Loading messages for conversation:', conversationId);
         const msgs = await getConversationMessages(conversationId);
+        console.log('[useConversationMessages] Loaded messages:', msgs.length, msgs);
         setMessages(msgs);
       } catch (err) {
         console.error('Error loading messages:', err);
@@ -54,6 +56,8 @@ export function useConversationMessages({
   useEffect(() => {
     if (!conversationId) return;
 
+    console.log('[useConversationMessages] Setting up real-time subscription for conversation:', conversationId, 'agentId:', agentId);
+
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -61,29 +65,56 @@ export function useConversationMessages({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'cc_messages',
+          table: 'messages', // Changed from 'cc_messages' to 'messages'
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
+          console.log('[useConversationMessages] New message received:', payload.new);
+          
+          // Skip agent messages from the current agent (already rendered optimistically)
+          const isAgentMessage = payload.new.sender_type === 'agent';
+          const isFromCurrentAgent = payload.new.sender_agent_id === agentId;
+          
+          if (isAgentMessage && isFromCurrentAgent) {
+            console.log('[useConversationMessages] Skipping agent message from current agent (already rendered optimistically):', payload.new.id);
+            return;
+          }
+
           const newMessage: DbMessage = {
             id: payload.new.id,
             conversation_id: payload.new.conversation_id,
-            sender_type: payload.new.direction === 'inbound' ? 'customer' : 'agent',
-            content: payload.new.body_text || payload.new.text || '',
+            sender_type: payload.new.sender_type || 'customer', // Use sender_type directly (not direction)
+            content: payload.new.content || '', // Use content field (not body_text or text)
             created_at: payload.new.created_at,
-            is_internal: payload.new.metadata?.is_internal || false,
+            is_internal: payload.new.is_internal || false,
             metadata: payload.new.metadata || {},
           };
 
-          setMessages(prev => [...prev, newMessage]);
+          console.log('[useConversationMessages] Adding new message to state:', newMessage);
+          setMessages(prev => {
+            // Check if message already exists to avoid duplicates
+            const exists = prev.some(msg => msg.id === newMessage.id);
+            if (exists) {
+              console.log('[useConversationMessages] Message already exists, skipping:', newMessage.id);
+              return prev;
+            }
+            // Add new message and sort by created_at to maintain chronological order
+            const updated = [...prev, newMessage];
+            updated.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+            console.log('[useConversationMessages] Updated messages count:', updated.length);
+            return updated;
+          });
         }
       )
       .subscribe();
 
     return () => {
+      console.log('[useConversationMessages] Cleaning up real-time subscription for conversation:', conversationId);
       supabase.removeChannel(channel);
     };
-  }, [conversationId]);
+  }, [conversationId, agentId]);
 
   // Send message function
   const send = useCallback(async (content: string, isInternal: boolean = false) => {
@@ -105,16 +136,28 @@ export function useConversationMessages({
 
       setMessages(prev => [...prev, optimisticMessage]);
 
-      // Send to backend
-      const sentMessage = await sendMessage(conversationId, content.trim(), 'agent', isInternal);
+      // Send to backend API
+      const sentMessage = await sendMessage(conversationId, content.trim(), 'agent', isInternal, agentId);
 
       if (sentMessage) {
         // Replace optimistic message with real one
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === optimisticMessage.id ? sentMessage : msg
-          )
-        );
+        // Also check if the real message already exists (from real-time subscription, though it should be skipped)
+        setMessages(prev => {
+          // Remove optimistic message
+          const withoutOptimistic = prev.filter(msg => msg.id !== optimisticMessage.id);
+          // Check if real message already exists
+          const alreadyExists = withoutOptimistic.some(msg => msg.id === sentMessage.id);
+          if (alreadyExists) {
+            console.log('[useConversationMessages] Real message already exists, skipping replacement:', sentMessage.id);
+            return withoutOptimistic;
+          }
+          // Add real message and sort
+          const updated = [...withoutOptimistic, sentMessage];
+          updated.sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          return updated;
+        });
       } else {
         // Remove optimistic message on failure
         setMessages(prev =>
@@ -126,7 +169,7 @@ export function useConversationMessages({
       console.error('Error sending message:', err);
       setError('Failed to send message');
     }
-  }, [conversationId]);
+  }, [conversationId, agentId]);
 
   return {
     messages,

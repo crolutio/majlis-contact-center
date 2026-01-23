@@ -26,13 +26,21 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
 
         console.log('[useAgentInbox] Fetching conversations...');
 
-        // Get conversations with customer data
-        const { data: convsWithCustomers, error: fetchError } = await supabase
+        // Get conversations assigned to this agent with handling_mode='human'
+        let query = supabase
           .from('conversations')
           .select(`
             *,
             customer:customers(*)
-          `);
+          `)
+          .eq('handling_mode', 'human');  // Only show human-handled conversations
+        
+        // Filter by assigned agent if agentId is provided
+        if (agentId) {
+          query = query.eq('assigned_agent_id', agentId);
+        }
+        
+        const { data: convsWithCustomers, error: fetchError } = await query;
 
         console.log('[useAgentInbox] Response:', { 
           data: convsWithCustomers, 
@@ -69,14 +77,31 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
         });
 
         // Transform to Conversation format with ChatInbox expected fields
-        const transformedConversations: any[] = convsWithCustomers.map((conv: any) => {
+        // Filter out any AI conversations that might have slipped through
+        const transformedConversations: any[] = convsWithCustomers
+          .filter((conv: any) => {
+            // Safety check: only include human-handled conversations
+            const isHuman = conv.handling_mode === 'human';
+            const matchesAgent = !agentId || conv.assigned_agent_id === agentId;
+            if (!isHuman) {
+              console.warn('[useAgentInbox] Filtering out AI conversation:', conv.id, {
+                handling_mode: conv.handling_mode,
+                assigned_agent_id: conv.assigned_agent_id,
+                agentId,
+              });
+            }
+            return isHuman && matchesAgent;
+          })
+          .map((conv: any) => {
           const messages = messagesByConv.get(conv.id) || [];
           const lastMessage = messages.length > 0
             ? messages.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
             : null;
 
-          // Calculate time in queue (minutes since start_time)
-          const timeInQueue = Math.floor((Date.now() - new Date(conv.start_time).getTime()) / (1000 * 60));
+          // Calculate time in queue (minutes since created_at)
+          // Handle null/undefined created_at to prevent NaN
+          const createdAt = conv.created_at ? new Date(conv.created_at).getTime() : Date.now();
+          const timeInQueue = Math.floor((Date.now() - createdAt) / (1000 * 60));
 
           const customer = conv.customer || {};
           const customerName = customer.name || customer.email || 'Unknown Customer';
@@ -95,7 +120,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             },
             // Additional fields expected by ChatInbox
             customerName,
-            timeInQueue: `${timeInQueue}m`,
+            timeInQueue: isNaN(timeInQueue) ? '0m' : `${timeInQueue}m`,
             channel: conv.channel,
             status: conv.status,
             priority: conv.priority || 'medium',
@@ -110,8 +135,8 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             queue: conv.queue || 'general',
             topic: conv.topic || '',
             lastMessage: lastMessage?.content || conv.last_message || '',
-            lastMessageTime: lastMessage ? new Date(lastMessage.created_at) : new Date(conv.last_message_time || conv.start_time),
-            startTime: new Date(conv.start_time),
+            lastMessageTime: lastMessage ? new Date(lastMessage.created_at) : new Date(conv.last_message_time || conv.created_at),
+            startTime: new Date(conv.created_at),
             messages: messages.map((msg: any) => ({
               id: msg.id,
               type: 'customer', // Default, would need more logic
@@ -138,18 +163,35 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
     fetchConversations();
 
     // Set up real-time subscription for conversation updates
+    // Only listen for conversations assigned to this agent with handling_mode='human'
+    if (!agentId) {
+      return; // No cleanup needed if no agentId
+    }
+
     const channel = supabase
-      .channel(`conversations`)
+      .channel(`agent_conversations:${agentId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'conversations',
+          filter: `assigned_agent_id=eq.${agentId}`,  // Filter at database level
         },
-        () => {
-          // Refetch conversations when there are changes
-          fetchConversations();
+        (payload) => {
+          // Additional check: only refetch if handling_mode is 'human'
+          const conv = payload.new || payload.old;
+          if (conv && conv.handling_mode === 'human' && conv.assigned_agent_id === agentId) {
+            console.log('[useAgentInbox] Realtime update for human-handled conversation:', conv.id);
+            fetchConversations();
+          } else {
+            console.log('[useAgentInbox] Ignoring realtime update (not human-handled):', {
+              id: conv?.id,
+              handling_mode: conv?.handling_mode,
+              assigned_agent_id: conv?.assigned_agent_id,
+              agentId,
+            });
+          }
         }
       )
       .subscribe();

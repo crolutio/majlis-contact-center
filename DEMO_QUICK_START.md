@@ -38,7 +38,7 @@ Create `.env.local` (if not exists) with:
 # Required
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_CONTACT_CENTER_SECRET_KEY=your-service-role-key
 USE_SUPABASE=true
 
 # Optional (for full features)

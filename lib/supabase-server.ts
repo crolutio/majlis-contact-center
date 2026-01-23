@@ -4,14 +4,14 @@
  * DO NOT expose this key to the client
  * 
  * DEMO MODE: This uses a lazy getter to avoid crashing at import time
- * when SUPABASE_SERVICE_ROLE_KEY is not set. Only throws when actually used.
+ * when SUPABASE_CONTACT_CENTER_SECRET_KEY is not set. Only throws when actually used.
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Get Supabase credentials from environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_CONTACT_CENTER_SECRET_KEY || '';
 
 // Lazy client instance (created only when getSupabaseServer() is called)
 let _supabaseServer: SupabaseClient | null = null;
@@ -20,12 +20,12 @@ let _supabaseServer: SupabaseClient | null = null;
  * Get Supabase server client (lazy initialization)
  * Throws only when called, not at import time
  * 
- * @throws Error if SUPABASE_SERVICE_ROLE_KEY is not configured
+ * @throws Error if SUPABASE_CONTACT_CENTER_SECRET_KEY is not configured
  */
 export function getSupabaseServer(): SupabaseClient {
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error(
-      'SUPABASE_SERVICE_ROLE_KEY is not set. For demo mode, do not call Next.js API routes that use supabase-server.'
+      'SUPABASE_CONTACT_CENTER_SECRET_KEY is not set. For demo mode, do not call Next.js API routes that use supabase-server.'
     );
   }
 
