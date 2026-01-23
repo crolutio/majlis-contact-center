@@ -60,6 +60,6 @@ export function formatConversationTime(date: Date | string | null | undefined): 
     return `${minutes}m ago`
   }
 
-  // Just now for very recent
-  return 'Just now'
+  // Now for very recent
+  return 'Now'
 }

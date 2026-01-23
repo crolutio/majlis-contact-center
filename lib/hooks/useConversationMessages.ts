@@ -96,38 +96,14 @@ export function useConversationMessages({
     try {
       setError(null);
 
-      // Optimistically add the message to UI
-      const optimisticMessage: DbMessage = {
-        id: `temp-${Date.now()}`,
-        conversation_id: conversationId,
-        sender_type: 'agent',
-        content: content.trim(),
-        created_at: new Date().toISOString(),
-        is_internal: isInternal,
-        metadata: {},
-      };
-
-      setMessages(prev => [...prev, optimisticMessage]);
-
-      // Send to backend
+      // Send to backend - real-time subscription will add the message to UI
       const sentMessage = await sendMessage(conversationId, content.trim(), 'agent', isInternal, {
         source,
         channel,
         agentId,
       });
 
-      if (sentMessage) {
-        // Replace optimistic message with real one
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === optimisticMessage.id ? sentMessage : msg
-          )
-        );
-      } else {
-        // Remove optimistic message on failure
-        setMessages(prev =>
-          prev.filter(msg => msg.id !== optimisticMessage.id)
-        );
+      if (!sentMessage) {
         setError('Failed to send message');
       }
     } catch (err) {

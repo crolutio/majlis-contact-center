@@ -295,6 +295,16 @@ export async function sendMessage(
       return null;
     }
 
+    // Update conversation with new message info
+    await supabase
+      .from('conversations')
+      .update({
+        last_message: content,
+        last_message_time: createdAt,
+        status: 'active', // Ensure it's active when agent responds
+      })
+      .eq('id', conversationId);
+
     // Transform to DbMessage format
     const dbMessage: DbMessage = {
       id: message.id,

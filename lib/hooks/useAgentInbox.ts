@@ -137,13 +137,42 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'conversations',
         },
-        () => {
-          // Refetch conversations when there are changes
-          fetchConversations();
+        (payload) => {
+          // Update the specific conversation that changed instead of refetching all
+          const updatedConversation = payload.new;
+
+          setConversations(prevConversations => {
+            const updated = prevConversations.map(conv => {
+              if (conv.id === updatedConversation.id) {
+                // Transform the updated conversation data similar to fetchConversations
+                const customer = updatedConversation.customer || conv.customer || {};
+                const customerName = customer.name || customer.email || 'Unknown Customer';
+
+                const updatedConv = {
+                  ...conv,
+                  status: updatedConversation.status,
+                  lastMessage: updatedConversation.last_message || conv.lastMessage,
+                  lastMessageTime: new Date(updatedConversation.last_message_time || conv.lastMessageTime),
+                  assignedTo: updatedConversation.assigned_to || conv.assignedTo,
+                  escalationRisk: updatedConversation.escalation_risk || conv.escalationRisk,
+                  // Update other fields as needed
+                };
+
+                return updatedConv;
+              }
+              return conv;
+            });
+
+            // Re-apply the escalation filter in case the conversation status changed
+            return updated.filter((conv: any) => {
+              const handlingStatus = getHandlingStatus(conv);
+              return handlingStatus !== 'ai-handled';
+            });
+          });
         }
       )
       .subscribe();
