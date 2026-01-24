@@ -97,7 +97,7 @@ export function ChatInbox({ activeConversationId, onConversationSelect, embedded
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-semibold text-sm text-foreground truncate">{conv.customerName}</p>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-black border-primary/20">
+                  <Badge variant="secondary" className="text-xs bg-primary/10 text-foreground border-primary/20">
                     {formatConversationTime(conv.lastMessageTime) || 'Unknown'}
                   </Badge>
                 </div>
@@ -173,7 +173,7 @@ export function ChatInbox({ activeConversationId, onConversationSelect, embedded
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-semibold text-sm text-foreground truncate">{conv.customerName}</p>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-black border-primary/20">
+                  <Badge variant="secondary" className="text-xs bg-primary/10 text-foreground border-primary/20">
                     {formatConversationTime(conv.lastMessageTime) || 'Unknown'}
                   </Badge>
                 </div>

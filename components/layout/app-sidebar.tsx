@@ -142,14 +142,28 @@ export function AppSidebar() {
             <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <MajlisConnectLogo className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
-            {!effectiveCollapsed && <span className="font-semibold text-lg">Majlis Connect</span>}
+            <span className={cn(
+              "font-semibold text-lg transition-all duration-200 ease-in-out overflow-hidden",
+              effectiveCollapsed
+                ? "w-0 opacity-0"
+                : "w-auto opacity-100"
+            )}>
+              Majlis Connect
+            </span>
           </Link>
-          {!effectiveCollapsed && <ThemeToggle />}
+          <div className={cn(
+            "transition-all duration-200 ease-in-out overflow-hidden",
+            effectiveCollapsed
+              ? "w-0 opacity-0"
+              : "w-auto opacity-100"
+          )}>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto transition-all duration-300">
         {(user.role === "back_office"
           ? backOfficeNavigation
           : user.role === "agent"
@@ -170,19 +184,27 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                effectiveCollapsed ? "justify-center px-2" : "justify-start px-3"
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
-              <Icon className="w-5 h-5" />
-              {!effectiveCollapsed && item.name}
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              <span className={cn(
+                "transition-all duration-200 ease-in-out overflow-hidden",
+                effectiveCollapsed
+                  ? "w-0 opacity-0 ml-0"
+                  : "w-auto opacity-100 ml-0"
+              )}>
+                {item.name}
+              </span>
               {!effectiveCollapsed && item.name === "Inbox" && user.role !== "agent" && (
                 <Badge
                   variant="secondary"
-                  className="ml-auto text-xs bg-sidebar-primary text-sidebar-primary-foreground"
+                  className="ml-auto text-xs bg-sidebar-primary text-sidebar-primary-foreground transition-all duration-200"
                 >
                   12
                 </Badge>
@@ -196,8 +218,14 @@ export function AppSidebar() {
       <div className="p-3 border-t border-sidebar-border">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors">
-              <Avatar className="h-9 w-9">
+            <button className={cn(
+              "w-full flex items-center p-2 rounded-lg hover:bg-sidebar-accent/50 transition-all duration-200",
+              effectiveCollapsed ? "justify-center gap-0" : "gap-3"
+            )}>
+              <Avatar className={cn(
+                "transition-all duration-200",
+                effectiveCollapsed ? "h-8 w-8" : "h-9 w-9"
+              )}>
                 <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                 <AvatarFallback>
                   {user.name
@@ -207,14 +235,17 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               {!effectiveCollapsed && (
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium truncate">{user.name}</p>
-                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", roleColors[user.role])}>
+                <div className="flex-1 text-left overflow-hidden">
+                  <p className="text-sm font-medium truncate transition-all duration-200">{user.name}</p>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 transition-all duration-200", roleColors[user.role])}>
                     {roleLabels[user.role]}
                   </Badge>
                 </div>
               )}
-              {!effectiveCollapsed && <ChevronDown className="w-4 h-4 text-sidebar-foreground/50" />}
+              <ChevronDown className={cn(
+                "w-4 h-4 text-sidebar-foreground/50 transition-all duration-200",
+                effectiveCollapsed ? "opacity-0 w-0" : "opacity-100 w-4"
+              )} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56" side="top">
