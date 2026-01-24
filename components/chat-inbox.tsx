@@ -3,7 +3,7 @@
 import { useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { MessageCircle, Instagram, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatConversationTime } from "@/lib/utils"
 import { useAgentInbox } from "@/lib/hooks/useAgentInbox"
 import { useAuth } from "@/contexts/auth-context"
 
@@ -98,7 +98,7 @@ export function ChatInbox({ activeConversationId, onConversationSelect, embedded
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-semibold text-sm text-foreground truncate">{conv.customerName}</p>
                   <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                    {conv.timeInQueue}
+                    {formatConversationTime(conv.lastMessageTime) || 'Unknown'}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">{conv.lastMessage}</p>
@@ -174,7 +174,7 @@ export function ChatInbox({ activeConversationId, onConversationSelect, embedded
                 <div className="flex items-center justify-between mb-1">
                   <p className="font-semibold text-sm text-foreground truncate">{conv.customerName}</p>
                   <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                    {conv.timeInQueue}
+                    {formatConversationTime(conv.lastMessageTime) || 'Unknown'}
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground truncate">{conv.lastMessage}</p>
