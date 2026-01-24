@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import {
   Inbox,
   BarChart3,
@@ -37,6 +38,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 // Base navigation items (for supervisors, admins, analysts)
 const baseNavigation = [
@@ -101,6 +103,19 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, switchRole, logout } = useAuth()
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+
+  // Auto-collapse after 3 seconds of no interaction
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsCollapsed(true)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  const effectiveCollapsed = isCollapsed && !isHovered
 
   if (!user) return null
 
@@ -113,15 +128,24 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col h-screen border-r border-sidebar-border">
+    <aside
+      className={`bg-sidebar text-sidebar-foreground flex flex-col h-screen border-r border-sidebar-border transition-all duration-300 ease-in-out ${
+        effectiveCollapsed ? 'w-16' : 'w-64'
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-        <Link href={user.role === "admin" ? "/agent-builder" : user.role === "agent" ? "/chat-agent" : user.role === "call_agent" ? "/call-agent" : user.role === "back_office" ? "/back-office" : "/inbox"} className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <MajlisConnectLogo className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
-          <span className="font-semibold text-lg">Majlis Connect</span>
-        </Link>
+        <div className="flex items-center justify-between w-full">
+          <Link href={user.role === "admin" ? "/agent-builder" : user.role === "agent" ? "/chat-agent" : user.role === "call_agent" ? "/call-agent" : user.role === "back_office" ? "/back-office" : "/inbox"} className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <MajlisConnectLogo className="w-5 h-5 text-sidebar-primary-foreground" />
+            </div>
+            {!effectiveCollapsed && <span className="font-semibold text-lg">Majlis Connect</span>}
+          </Link>
+          {!effectiveCollapsed && <ThemeToggle />}
+        </div>
       </div>
 
       {/* Navigation */}
@@ -151,10 +175,11 @@ export function AppSidebar() {
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
               )}
+              title={effectiveCollapsed ? item.name : undefined}
             >
               <Icon className="w-5 h-5" />
-              {item.name}
-              {item.name === "Inbox" && user.role !== "agent" && (
+              {!effectiveCollapsed && item.name}
+              {!effectiveCollapsed && item.name === "Inbox" && user.role !== "agent" && (
                 <Badge
                   variant="secondary"
                   className="ml-auto text-xs bg-sidebar-primary text-sidebar-primary-foreground"
@@ -181,13 +206,15 @@ export function AppSidebar() {
                     .join("")}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium truncate">{user.name}</p>
-                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", roleColors[user.role])}>
-                  {roleLabels[user.role]}
-                </Badge>
-              </div>
-              <ChevronDown className="w-4 h-4 text-sidebar-foreground/50" />
+              {!effectiveCollapsed && (
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium truncate">{user.name}</p>
+                  <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", roleColors[user.role])}>
+                    {roleLabels[user.role]}
+                  </Badge>
+                </div>
+              )}
+              {!effectiveCollapsed && <ChevronDown className="w-4 h-4 text-sidebar-foreground/50" />}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56" side="top">
