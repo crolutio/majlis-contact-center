@@ -503,9 +503,18 @@ export async function createBankingConversationFromMessage(
           .from('cc_conversations')
           .update({ updated_at: new Date().toISOString() })
           .eq('id', conversationId);
+
+        // Also update the unified conversations table used by Digital Channels
+        await supabase
+          .from('conversations')
+          .update({
+            last_message: message.body,
+            last_message_time: message.timestamp.toISOString()
+          })
+          .eq('id', conversationId);
       } catch (e) {
         // Non-fatal
-        console.warn('⚠️ Failed to bump cc_conversations.updated_at:', e);
+        console.warn('⚠️ Failed to bump conversation timestamps:', e);
       }
     } else {
       // Create new conversation
@@ -531,6 +540,30 @@ export async function createBankingConversationFromMessage(
         return null;
       }
       conversationId = data.id;
+
+      // Also create entry in unified conversations table for Digital Channels
+      try {
+        await supabase
+          .from('conversations')
+          .insert({
+            id: conversationId,
+            customer_id: customerId,
+            channel: message.channel,
+            status: 'active', // Map 'open' to 'active' for unified schema
+            priority: 'medium',
+            last_message: message.body,
+            last_message_time: message.timestamp.toISOString(),
+            start_time: message.timestamp.toISOString(),
+            source: 'banking',
+            industry: 'banking',
+            provider: provider,
+            provider_conversation_id: message.from,
+            topic: 'Incoming Message',
+            queue: 'General Support',
+          });
+      } catch (e) {
+        console.warn('⚠️ Failed to create unified conversation:', e);
+      }
     }
 
     // Step 4: Store message with all required fields

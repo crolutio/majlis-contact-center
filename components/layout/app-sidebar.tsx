@@ -105,17 +105,21 @@ export function AppSidebar() {
   const { user, switchRole, logout } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
-  // Auto-collapse after 3 seconds of no interaction
+  // Auto-collapse after 3 seconds of no interaction, but not if dropdown is open
   useEffect(() => {
+    if (isDropdownOpen) return
+
     const timer = setTimeout(() => {
       setIsCollapsed(true)
     }, 3000)
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [isDropdownOpen])
 
-  const effectiveCollapsed = isCollapsed && !isHovered
+  const effectiveCollapsed = (isCollapsed && !isHovered) && !isDropdownOpen && !isUserMenuOpen
 
   if (!user) return null
 
@@ -143,7 +147,7 @@ export function AppSidebar() {
               <MajlisConnectLogo className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
             <span className={cn(
-              "font-semibold text-lg transition-all duration-200 ease-in-out overflow-hidden",
+              "font-semibold text-lg transition-all duration-200 ease-in-out overflow-hidden whitespace-nowrap",
               effectiveCollapsed
                 ? "w-0 opacity-0"
                 : "w-auto opacity-100"
@@ -157,7 +161,7 @@ export function AppSidebar() {
               ? "w-0 opacity-0"
               : "w-auto opacity-100"
           )}>
-            <ThemeToggle />
+            <ThemeToggle onOpenChange={setIsDropdownOpen} />
           </div>
         </div>
       </div>
@@ -184,11 +188,11 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                effectiveCollapsed ? "justify-center px-2" : "justify-start px-3"
+                effectiveCollapsed ? "justify-center px-3" : "justify-start px-3"
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
@@ -216,7 +220,7 @@ export function AppSidebar() {
 
       {/* User Menu */}
       <div className="p-3 border-t border-sidebar-border">
-        <DropdownMenu>
+        <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button className={cn(
               "w-full flex items-center p-2 rounded-lg hover:bg-sidebar-accent/50 transition-all duration-200",
