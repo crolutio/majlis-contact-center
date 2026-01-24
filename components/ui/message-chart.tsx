@@ -133,36 +133,47 @@ export function MessageChart({ chartData, className }: MessageChartProps) {
 
 // Function to parse chart data from message content
 export function parseChartFromContent(content: string): { chartData: ChartData | null; remainingContent: string } {
-  // Look for chart blocks in the content - more robust regex for multiline JSON
-  const chartRegex = /chart\s*(\{[\s\S]*?\n\})/i
-  const match = content.match(chartRegex)
+  // 1) Look for fenced code block: ```chart ...``` or ```json ...```
+  const fencedRegex = /```(?:chart|json)?\s*([\s\S]*?)```/i
+  const fencedMatch = content.match(fencedRegex)
 
-  if (!match) {
-    // Try alternative format without the "chart" prefix (just JSON)
-    const jsonRegex = /(\{[\s\S]*?"type"\s*:\s*"pie"[\s\S]*?\n\})/i
-    const jsonMatch = content.match(jsonRegex)
-    if (jsonMatch) {
-      try {
-        const chartData: ChartData = JSON.parse(jsonMatch[1])
-        const remainingContent = content.replace(jsonRegex, '').trim()
-        return { chartData, remainingContent }
-      } catch (error) {
-        console.error('Failed to parse JSON chart data:', error)
-      }
+  if (fencedMatch) {
+    try {
+      const fencedJson = fencedMatch[1].trim()
+      const chartData: ChartData = JSON.parse(fencedJson)
+      const remainingContent = content.replace(fencedRegex, '').trim()
+      return { chartData, remainingContent }
+    } catch (error) {
+      console.error('Failed to parse fenced chart data:', error)
     }
-    return { chartData: null, remainingContent: content }
   }
 
-  try {
-    const chartJson = match[1]
-    const chartData: ChartData = JSON.parse(chartJson)
-
-    // Remove the chart block from content
-    const remainingContent = content.replace(chartRegex, '').trim()
-
-    return { chartData, remainingContent }
-  } catch (error) {
-    console.error('Failed to parse chart data:', error)
-    return { chartData: null, remainingContent: content }
+  // 2) Look for "chart" prefix followed by JSON
+  const chartRegex = /chart\s*(\{[\s\S]*?\})/i
+  const chartMatch = content.match(chartRegex)
+  if (chartMatch) {
+    try {
+      const chartJson = chartMatch[1].trim()
+      const chartData: ChartData = JSON.parse(chartJson)
+      const remainingContent = content.replace(chartRegex, '').trim()
+      return { chartData, remainingContent }
+    } catch (error) {
+      console.error('Failed to parse chart data:', error)
+    }
   }
+
+  // 3) Fallback: any JSON with a "type" field
+  const jsonRegex = /(\{[\s\S]*?"type"\s*:\s*"(pie|bar|line)"[\s\S]*?\})/i
+  const jsonMatch = content.match(jsonRegex)
+  if (jsonMatch) {
+    try {
+      const chartData: ChartData = JSON.parse(jsonMatch[1])
+      const remainingContent = content.replace(jsonRegex, '').trim()
+      return { chartData, remainingContent }
+    } catch (error) {
+      console.error('Failed to parse JSON chart data:', error)
+    }
+  }
+
+  return { chartData: null, remainingContent: content }
 }

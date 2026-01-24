@@ -30,8 +30,7 @@ import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { MessageContent } from "@/components/ui/message-content"
 import { useAuth } from "@/contexts/auth-context"
 import { getConversationDetails, getConversationMessages, type ConversationDetails } from "@/lib/chat-queries"
 import { Loader2 } from "lucide-react"
@@ -556,12 +555,7 @@ export function ChatAgentDesktop({
                         )}
                       >
                         {msg.type === "text" ? (
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            className="text-sm leading-relaxed whitespace-pre-wrap [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1"
-                          >
-                            {msg.content}
-                          </ReactMarkdown>
+                          <MessageContent content={msg.content} />
                         ) : (
                           <div className="space-y-2">
                             <img

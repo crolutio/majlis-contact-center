@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth-context"
 import { ConversationList } from "@/components/inbox/conversation-list"
@@ -16,6 +16,7 @@ import {
   type Industry 
 } from "@/lib/sample-data"
 import { filterByHandlingStatus, getHandlingLabel, type HandlingStatus } from "@/lib/conversation-handling"
+import { supabase } from "@/lib/supabase"
 
 export default function InboxPage() {
   const router = useRouter()
@@ -124,76 +125,100 @@ export default function InboxPage() {
     return counts
   }, [allFetchedConversations])
 
+  const fetchConversations = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/conversations?industry=${selectedIndustry}`);
+      
+      // Check if response is OK
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get response as text first to check if it's valid JSON
+      const responseText = await response.text();
+      console.log('API response text (first 500 chars):', responseText.substring(0, 500));
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError: any) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text:', responseText);
+        throw new Error(`Failed to parse JSON: ${parseError.message}`);
+      }
+      
+      if (data.success) {
+        const allConversations = (data.conversations || []).map((conv: any) => ({
+          ...conv,
+          // Convert date strings back to Date objects
+          lastMessageTime: new Date(conv.lastMessageTime),
+          startTime: new Date(conv.startTime),
+          sla: {
+            ...conv.sla,
+            deadline: new Date(conv.sla.deadline),
+          },
+          messages: conv.messages?.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp),
+          })) || [],
+        }));
+        
+        // Store all conversations
+        setAllFetchedConversations(allConversations);
+      } else {
+        setAllFetchedConversations([]);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      // Fallback to demo data
+      const demoConversations = getConversationsByIndustry(selectedIndustry);
+      setAllFetchedConversations(demoConversations);
+      setIsLoading(false);
+    }
+  }, [selectedIndustry]);
+
   // Fetch conversations from API (only when industry changes)
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/conversations?industry=${selectedIndustry}`);
-        
-        // Check if response is OK
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API error:', {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorText,
-          });
-          throw new Error(`API error: ${response.status} ${response.statusText}`);
-        }
-        
-        // Get response as text first to check if it's valid JSON
-        const responseText = await response.text();
-        console.log('API response text (first 500 chars):', responseText.substring(0, 500));
-        
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError: any) {
-          console.error('JSON parse error:', parseError);
-          console.error('Response text:', responseText);
-          throw new Error(`Failed to parse JSON: ${parseError.message}`);
-        }
-        
-        if (data.success) {
-          const allConversations = (data.conversations || []).map((conv: any) => ({
-            ...conv,
-            // Convert date strings back to Date objects
-            lastMessageTime: new Date(conv.lastMessageTime),
-            startTime: new Date(conv.startTime),
-            sla: {
-              ...conv.sla,
-              deadline: new Date(conv.sla.deadline),
-            },
-            messages: conv.messages?.map((msg: any) => ({
-              ...msg,
-              timestamp: new Date(msg.timestamp),
-            })) || [],
-          }));
-          
-          // Store all conversations
-          setAllFetchedConversations(allConversations);
-        } else {
-          setAllFetchedConversations([]);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        // Fallback to demo data
-        const demoConversations = getConversationsByIndustry(selectedIndustry);
-        setAllFetchedConversations(demoConversations);
-        setIsLoading(false);
-      }
-    };
-
     fetchConversations();
 
     // Poll for updates every 30 seconds (reduced from 5s for performance)
-    // Consider using Supabase real-time subscriptions for instant updates without polling
     const interval = setInterval(fetchConversations, 30000);
 
     return () => clearInterval(interval);
-  }, [selectedIndustry]) // Only refetch when industry changes
+  }, [fetchConversations]); // Only refetch when industry changes
+
+  // Real-time subscription for instant updates (Supabase)
+  useEffect(() => {
+    const useSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true'
+    if (!useSupabase) return
+
+    const channel = supabase
+      .channel('conversations-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+        },
+        () => {
+          fetchConversations()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchConversations])
 
   // Apply all filters client-side (when filters or fetched data changes)
   useEffect(() => {

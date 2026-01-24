@@ -103,7 +103,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, switchRole, logout } = useAuth()
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const [isHovered, setIsHovered] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -167,7 +167,12 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto transition-all duration-200">
+      <nav
+        className={cn(
+          "flex-1 py-4 space-y-1 overflow-y-auto",
+          effectiveCollapsed ? "px-2" : "px-3"
+        )}
+      >
         {(user.role === "back_office"
           ? backOfficeNavigation
           : user.role === "agent"
@@ -188,27 +193,29 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                "flex items-center rounded-lg text-sm font-medium transition-colors duration-200",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                effectiveCollapsed ? "justify-center px-1" : "justify-start px-3"
+                effectiveCollapsed
+                  ? "h-10 w-10 mx-auto justify-center"
+                  : "w-full gap-3 px-3 py-2.5 justify-start"
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              <span className={cn(
-                "transition-all duration-200 ease-in-out overflow-hidden",
-                effectiveCollapsed
-                  ? "w-0 opacity-0 ml-0"
-                  : "w-auto opacity-100 ml-0"
-              )}>
+              <span
+                className={cn(
+                  "transition-opacity duration-150 ease-in-out overflow-hidden",
+                  effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                )}
+              >
                 {item.name}
               </span>
               {!effectiveCollapsed && item.name === "Inbox" && user.role !== "agent" && (
                 <Badge
                   variant="secondary"
-                  className="ml-auto text-xs bg-sidebar-primary text-sidebar-primary-foreground transition-all duration-200"
+                  className="ml-auto text-xs bg-sidebar-primary text-sidebar-primary-foreground transition-colors duration-200"
                 >
                   12
                 </Badge>
@@ -223,11 +230,10 @@ export function AppSidebar() {
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "w-full flex items-center p-2 rounded-lg hover:bg-sidebar-accent/50 transition-all duration-200",
-              effectiveCollapsed ? "justify-center gap-0" : "gap-3"
+              "w-full flex items-center rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200",
+              effectiveCollapsed ? "h-10 w-10 mx-auto justify-center p-0" : "gap-3 p-2"
             )}>
               <Avatar className={cn(
-                "transition-all duration-200",
                 effectiveCollapsed ? "h-8 w-8" : "h-9 w-9"
               )}>
                 <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
@@ -247,7 +253,7 @@ export function AppSidebar() {
                 </div>
               )}
               <ChevronDown className={cn(
-                "w-4 h-4 text-sidebar-foreground/50 transition-all duration-200",
+                "w-4 h-4 text-sidebar-foreground/50 transition-opacity duration-150",
                 effectiveCollapsed ? "opacity-0 w-0" : "opacity-100 w-4"
               )} />
             </button>
