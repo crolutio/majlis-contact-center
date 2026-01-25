@@ -43,6 +43,7 @@ import type { CallAnalysisRow } from "@/lib/automation/types"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
 import { MessageContent } from "@/components/ui/message-content"
+import { supabase } from "@/lib/supabase"
 
 const channelIcons = {
   voice: Phone,
@@ -61,6 +62,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
   const [message, setMessage] = useState("")
   const [handoverOpen, setHandoverOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isEscalating, setIsEscalating] = useState(false)
   const [callAnalysis, setCallAnalysis] = useState<CallAnalysisRow | null>(null)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
   const router = useRouter()
@@ -75,6 +77,39 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
     source: (conversation?.metadata?.source as 'banking' | 'default') || 'default',
     channel: conversation?.channel,
   })
+
+  const handleEscalate = async () => {
+    if (!conversation?.id || isEscalating) return
+    setIsEscalating(true)
+
+    try {
+      // Update unified conversations table
+      await supabase
+        .from('conversations')
+        .update({
+          status: 'escalated',
+          escalation_risk: true,
+          priority: 'high',
+        })
+        .eq('id', conversation.id)
+
+      // Update banking conversations table if it exists
+      await supabase
+        .from('cc_conversations')
+        .update({
+          status: 'escalated',
+          priority: 'high',
+        })
+        .eq('id', conversation.id)
+
+      // Trigger refresh to update lists
+      router.refresh()
+    } catch (error) {
+      console.error('Failed to escalate conversation:', error)
+    } finally {
+      setIsEscalating(false)
+    }
+  }
 
   const parseTimestamp = (value: Date | string | null | undefined) => {
     if (!value) return null
@@ -519,9 +554,9 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
                     <ArrowUpRight className="h-4 w-4 mr-1" />
                     Human Handover
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleEscalate} disabled={isEscalating}>
                     <ArrowUpRight className="h-4 w-4 mr-1" />
-                    Escalate
+                    {isEscalating ? "Escalating..." : "Escalate"}
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

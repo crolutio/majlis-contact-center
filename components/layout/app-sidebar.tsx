@@ -167,7 +167,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto overflow-x-hidden">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto overflow-x-hidden min-w-0">
         {(user.role === "back_office"
           ? backOfficeNavigation
           : user.role === "agent"
@@ -188,11 +188,12 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-0 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 overflow-hidden",
+                "flex items-center w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 overflow-hidden min-w-0",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                "justify-start flex-nowrap"
+                "justify-start flex-nowrap",
+                effectiveCollapsed ? "gap-0" : "gap-3"
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
@@ -225,7 +226,8 @@ export function AppSidebar() {
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200 overflow-hidden"
+              "w-full flex items-center px-4 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200 overflow-hidden min-w-0",
+              effectiveCollapsed ? "gap-0" : "gap-3"
             )}>
               <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
