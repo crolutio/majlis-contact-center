@@ -404,6 +404,7 @@ export default function InboxPage() {
       <ConversationPanel 
         conversation={selectedConversation} 
         onOpenDrawer={() => setDrawerOpen(true)}
+        onEscalated={fetchConversations}
         onDelete={(conversationId) => {
           // Remove from list and clear selection
           setConversations(conversations.filter(c => c.id !== conversationId));

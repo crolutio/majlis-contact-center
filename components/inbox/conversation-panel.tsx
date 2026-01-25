@@ -43,7 +43,6 @@ import type { CallAnalysisRow } from "@/lib/automation/types"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
 import { MessageContent } from "@/components/ui/message-content"
-import { supabase } from "@/lib/supabase"
 
 const channelIcons = {
   voice: Phone,
@@ -56,9 +55,10 @@ interface ConversationPanelProps {
   conversation: Conversation | null
   onOpenDrawer: () => void
   onDelete?: (conversationId: string) => void
+  onEscalated?: () => void
 }
 
-export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: ConversationPanelProps) {
+export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEscalated }: ConversationPanelProps) {
   const [message, setMessage] = useState("")
   const [handoverOpen, setHandoverOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -83,27 +83,16 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete }: Conv
     setIsEscalating(true)
 
     try {
-      // Update unified conversations table
-      await supabase
-        .from('conversations')
-        .update({
-          status: 'escalated',
-          escalation_risk: true,
-          priority: 'high',
-        })
-        .eq('id', conversation.id)
+      const response = await fetch(`/api/conversations/${conversation.id}/escalate`, {
+        method: "POST",
+      })
 
-      // Update banking conversations table if it exists
-      await supabase
-        .from('cc_conversations')
-        .update({
-          status: 'escalated',
-          priority: 'high',
-        })
-        .eq('id', conversation.id)
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || "Failed to escalate conversation")
+      }
 
-      // Trigger refresh to update lists
-      router.refresh()
+      onEscalated?.()
     } catch (error) {
       console.error('Failed to escalate conversation:', error)
     } finally {

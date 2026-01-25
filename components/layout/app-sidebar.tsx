@@ -134,15 +134,18 @@ export function AppSidebar() {
   return (
     <aside
       className={`bg-sidebar text-sidebar-foreground flex flex-col h-screen border-r border-sidebar-border transition-all duration-200 ease-in-out overflow-x-hidden ${
-        effectiveCollapsed ? 'w-16' : 'w-64'
+        effectiveCollapsed ? 'w-[84px]' : 'w-64'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Logo */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-between w-full">
-          <Link href={user.role === "admin" ? "/agent-builder" : user.role === "agent" ? "/chat-agent" : user.role === "call_agent" ? "/call-agent" : user.role === "back_office" ? "/back-office" : "/inbox"} className="flex items-center gap-2">
+        <div className={cn("flex items-center w-full", effectiveCollapsed ? "justify-center" : "justify-between")}>
+          <Link
+            href={user.role === "admin" ? "/agent-builder" : user.role === "agent" ? "/chat-agent" : user.role === "call_agent" ? "/call-agent" : user.role === "back_office" ? "/back-office" : "/inbox"}
+            className={cn("flex items-center gap-2", effectiveCollapsed && "justify-center")}
+          >
             <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
               <MajlisConnectLogo className="w-5 h-5 text-sidebar-primary-foreground" />
             </div>
@@ -167,7 +170,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto overflow-x-hidden min-w-0">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden min-w-0">
         {(user.role === "back_office"
           ? backOfficeNavigation
           : user.role === "agent"
@@ -188,7 +191,7 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center w-full px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 overflow-hidden min-w-0",
+                "flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 overflow-hidden min-w-0",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
@@ -197,7 +200,10 @@ export function AppSidebar() {
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
-              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <div className={cn(
+                "w-8 h-8 flex items-center justify-center flex-shrink-0",
+                effectiveCollapsed && "mx-auto"
+              )}>
                 <Icon className="w-5 h-5" />
               </div>
               <span
@@ -226,10 +232,13 @@ export function AppSidebar() {
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "w-full flex items-center px-4 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200 overflow-hidden min-w-0",
-              effectiveCollapsed ? "gap-0" : "gap-3"
+              "w-full flex items-center px-3 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200 overflow-hidden min-w-0",
+              effectiveCollapsed ? "gap-0 justify-center" : "gap-3"
             )}>
-              <Avatar className="h-8 w-8 flex-shrink-0">
+              <Avatar className={cn(
+                "h-8 w-8 flex-shrink-0",
+                effectiveCollapsed && "mx-auto"
+              )}>
                 <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                 <AvatarFallback>
                   {user.name
