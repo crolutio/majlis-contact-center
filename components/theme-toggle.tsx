@@ -25,6 +25,12 @@ export function ThemeToggle({ onOpenChange }: ThemeToggleProps = {}) {
     onOpenChange?.(newOpen)
   }
 
+  React.useEffect(() => {
+    return () => {
+      onOpenChange?.(false)
+    }
+  }, [onOpenChange])
+
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>

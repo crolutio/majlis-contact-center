@@ -132,6 +132,29 @@ export function MessageChart({ chartData, className }: MessageChartProps) {
 }
 
 // Function to parse chart data from message content
+function extractJsonBlock(input: string, startIndex: number): string | null {
+  let depth = 0
+  let started = false
+  let result = ''
+
+  for (let i = startIndex; i < input.length; i++) {
+    const char = input[i]
+    if (char === '{') {
+      depth += 1
+      started = true
+    }
+    if (started) result += char
+    if (char === '}') {
+      depth -= 1
+      if (started && depth === 0) {
+        return result
+      }
+    }
+  }
+
+  return null
+}
+
 export function parseChartFromContent(content: string): { chartData: ChartData | null; remainingContent: string } {
   // 1) Look for fenced code block: ```chart ...``` or ```json ...```
   const fencedRegex = /```(?:chart|json)?\s*([\s\S]*?)```/i
@@ -148,17 +171,21 @@ export function parseChartFromContent(content: string): { chartData: ChartData |
     }
   }
 
-  // 2) Look for "chart" prefix followed by JSON
-  const chartRegex = /chart\s*(\{[\s\S]*?\})/i
-  const chartMatch = content.match(chartRegex)
-  if (chartMatch) {
-    try {
-      const chartJson = chartMatch[1].trim()
-      const chartData: ChartData = JSON.parse(chartJson)
-      const remainingContent = content.replace(chartRegex, '').trim()
-      return { chartData, remainingContent }
-    } catch (error) {
-      console.error('Failed to parse chart data:', error)
+  // 2) Look for "chart" prefix followed by JSON using brace matching
+  const chartIndex = content.toLowerCase().indexOf('chart')
+  if (chartIndex >= 0) {
+    const braceIndex = content.indexOf('{', chartIndex)
+    if (braceIndex >= 0) {
+      const jsonBlock = extractJsonBlock(content, braceIndex)
+      if (jsonBlock) {
+        try {
+          const chartData: ChartData = JSON.parse(jsonBlock.trim())
+          const remainingContent = content.replace(jsonBlock, '').replace(/chart/i, '').trim()
+          return { chartData, remainingContent }
+        } catch (error) {
+          console.error('Failed to parse chart JSON block:', error)
+        }
+      }
     }
   }
 

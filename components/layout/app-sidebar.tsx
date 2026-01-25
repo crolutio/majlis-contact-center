@@ -167,12 +167,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav
-        className={cn(
-          "flex-1 py-4 space-y-1 overflow-y-auto",
-          effectiveCollapsed ? "px-2" : "px-3"
-        )}
-      >
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         {(user.role === "back_office"
           ? backOfficeNavigation
           : user.role === "agent"
@@ -193,20 +188,18 @@ export function AppSidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center rounded-lg text-sm font-medium transition-colors duration-200",
+                "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 overflow-hidden",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                effectiveCollapsed
-                  ? "h-10 w-10 mx-auto justify-center"
-                  : "w-full gap-3 px-3 py-2.5 justify-start"
+                "justify-start"
               )}
               title={effectiveCollapsed ? item.name : undefined}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
               <span
                 className={cn(
-                  "transition-opacity duration-150 ease-in-out overflow-hidden",
+                  "transition-opacity duration-150 ease-in-out overflow-hidden whitespace-nowrap",
                   effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
                 )}
               >
@@ -230,12 +223,9 @@ export function AppSidebar() {
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button className={cn(
-              "w-full flex items-center rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200",
-              effectiveCollapsed ? "h-10 w-10 mx-auto justify-center p-0" : "gap-3 p-2"
+              "w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-sidebar-accent/50 transition-colors duration-200"
             )}>
-              <Avatar className={cn(
-                effectiveCollapsed ? "h-8 w-8" : "h-9 w-9"
-              )}>
+              <Avatar className="h-8 w-8">
                 <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
                 <AvatarFallback>
                   {user.name

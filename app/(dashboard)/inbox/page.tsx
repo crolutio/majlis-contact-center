@@ -197,8 +197,7 @@ export default function InboxPage() {
 
   // Real-time subscription for instant updates (Supabase)
   useEffect(() => {
-    const useSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true'
-    if (!useSupabase) return
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return
 
     const channel = supabase
       .channel('conversations-updates')
