@@ -189,8 +189,9 @@ export default function InboxPage() {
   useEffect(() => {
     fetchConversations();
 
-    // Poll for updates every 30 seconds (reduced from 5s for performance)
-    const interval = setInterval(fetchConversations, 30000);
+    // Poll for updates (faster for banking escalations)
+    const intervalMs = selectedIndustry === "banking" ? 5000 : 30000;
+    const interval = setInterval(fetchConversations, intervalMs);
 
     return () => clearInterval(interval);
   }, [fetchConversations]); // Only refetch when industry changes
