@@ -151,7 +151,7 @@ export function AppSidebar() {
                 <MajlisConnectLogo className="w-6 h-6 text-sidebar-primary-foreground" />
               </div>
             </div>
-            <div className="flex flex-col items-start text-left py-2">
+            <div className="flex flex-col items-start text-left py-6">
               <span
                 className={cn(
                   "font-semibold text-lg transition-all duration-200 ease-in-out overflow-hidden whitespace-nowrap truncate pr-2",
