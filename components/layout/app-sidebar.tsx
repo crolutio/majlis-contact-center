@@ -140,13 +140,13 @@ export function AppSidebar() {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Logo */}
-      <div className="h-16 flex items-center border-b border-sidebar-border">
+      <div className="min-h-16 py-3 flex items-center border-b border-sidebar-border">
         <div className="flex items-center w-full gap-1 pr-2">
           <Link
             href={user.role === "admin" ? "/agent-builder" : user.role === "agent" ? "/chat-agent" : user.role === "call_agent" ? "/call-agent" : user.role === "back_office" ? "/back-office" : "/inbox"}
             className="flex items-center min-w-0 flex-1"
           >
-            <div className="w-[84px] flex items-center justify-center flex-shrink-0 py-6">
+            <div className="w-[84px] flex items-center justify-center flex-shrink-0">
               <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
                 <MajlisConnectLogo className="w-6 h-6 text-sidebar-primary-foreground" />
               </div>
