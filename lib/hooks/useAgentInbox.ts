@@ -16,6 +16,16 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const sortByLastMessageTime = (
+    items: (Conversation & { lastMessageTime?: Date })[],
+  ) => {
+    return [...items].sort((a, b) => {
+      const timeA = a.lastMessageTime ? a.lastMessageTime.getTime() : 0
+      const timeB = b.lastMessageTime ? b.lastMessageTime.getTime() : 0
+      return timeB - timeA
+    })
+  }
+
   const fetchConversations = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -121,7 +131,7 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
       });
 
       console.log('[useAgentInbox] Filtered to escalated conversations:', escalatedConversations.length);
-      setConversations(escalatedConversations);
+      setConversations(sortByLastMessageTime(escalatedConversations));
     } catch (err) {
       console.error('[useAgentInbox] Error in fetchConversations:', err);
       setError(`Failed to load conversations: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -203,10 +213,11 @@ export function useAgentInbox(agentId: string | null): UseAgentInboxReturn {
             });
 
             // Re-apply the escalation filter in case the conversation status changed
-            return updated.filter((conv: any) => {
+            const filtered = updated.filter((conv: any) => {
               const handlingStatus = getHandlingStatus(conv);
               return handlingStatus !== 'ai-handled';
             });
+            return sortByLastMessageTime(filtered);
           });
         }
       )

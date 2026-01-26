@@ -154,6 +154,11 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
   
   // Check if conversation is AI-handled (messages should be blocked)
   const isAIHandled = conversation && getHandlingStatus(conversation) === 'ai-handled'
+  const sourceValue =
+    conversation?.metadata?.source || (conversation as any)?.industry || "default"
+  const sourceLabel = sourceValue
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 
   // Fetch call analysis for voice conversations
   useEffect(() => {
@@ -327,7 +332,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
     <>
       <div className="flex-1 min-h-0 flex flex-col bg-background h-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border relative">
           <div className="flex items-center gap-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={conversation.customer.avatar || "/placeholder.svg"} alt={conversation.customer.name} />
@@ -352,6 +357,12 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
                 <span>{conversation.topic}</span>
               </div>
             </div>
+          </div>
+
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <Badge variant="secondary" className="text-xs bg-muted/60 text-foreground">
+              {sourceLabel}
+            </Badge>
           </div>
 
           <div className="flex items-center gap-2">

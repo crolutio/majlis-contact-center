@@ -261,7 +261,12 @@ export function AppSidebar() {
               </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56" side="top">
+          <DropdownMenuContent
+            align={effectiveCollapsed ? "center" : "end"}
+            className="w-56"
+            side="top"
+            sideOffset={12}
+          >
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => handleRoleSwitch("agent")} className="capitalize">
@@ -270,13 +275,6 @@ export function AppSidebar() {
               </Badge>
               Agent
               {user.role === "agent" && <span className="ml-auto text-xs text-muted-foreground">Current</span>}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleRoleSwitch("call_agent")} className="capitalize">
-              <Badge variant="outline" className={cn("mr-2", roleColors.call_agent)}>
-                C
-              </Badge>
-              Call Agent
-              {user.role === "call_agent" && <span className="ml-auto text-xs text-muted-foreground">Current</span>}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleRoleSwitch("supervisor")} className="capitalize">
               <Badge variant="outline" className={cn("mr-2", roleColors.supervisor)}>
