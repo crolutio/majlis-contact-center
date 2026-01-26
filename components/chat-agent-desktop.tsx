@@ -421,16 +421,16 @@ export function ChatAgentDesktop({
                       <h2 className="font-semibold text-foreground">{activeConvo.customerName}</h2>
                       <p className="text-xs text-muted-foreground">Active</p>
                     </div>
-                    <div className="ml-auto">
-                      <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-xs font-medium">
-                        Banking
-                      </Badge>
-                    </div>
                   </>
                 ) : (
                   <div className="text-sm text-muted-foreground">Select a conversation to start</div>
                 )}
               </div>
+              {activeConvo && (
+                <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 border-blue-500/20 text-xs font-medium">
+                  Banking
+                </Badge>
+              )}
             </div>
           </div>
 
