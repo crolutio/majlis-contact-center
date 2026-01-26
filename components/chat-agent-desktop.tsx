@@ -15,7 +15,6 @@ import {
   Search,
   Copy,
   Check,
-  Users,
   Package,
   Sparkles,
   X,
@@ -143,7 +142,6 @@ export function ChatAgentDesktop({
   const [copiedProductId, setCopiedProductId] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  const [showTransferDropdown, setShowTransferDropdown] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showVideoRequest, setShowVideoRequest] = useState(false)
   const [showScreenShareRequest, setShowScreenShareRequest] = useState(false)
@@ -151,7 +149,6 @@ export function ChatAgentDesktop({
   const [showWrapUp, setShowWrapUp] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -165,9 +162,6 @@ export function ChatAgentDesktop({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowTransferDropdown(false)
-      }
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
         setShowStatusDropdown(false)
       }
@@ -223,10 +217,6 @@ export function ChatAgentDesktop({
     // In demo mode, we just show the UI state. In production, this would send a system message via API.
   }
 
-  const handleTransfer = (department: string) => {
-    // In demo mode, we just show the UI state. In production, this would send a system message via API.
-    setShowTransferDropdown(false)
-  }
 
   const handleEndChat = () => {
     setShowWrapUp(true)
@@ -384,48 +374,6 @@ export function ChatAgentDesktop({
               </button>
             )}
 
-            {/* Transfer Button in Header */}
-            <div className="relative ml-auto" ref={dropdownRef}>
-              <Button variant="outline" size="sm" onClick={() => setShowTransferDropdown(!showTransferDropdown)}>
-                <Users className="w-4 h-4 mr-2" />
-                Transfer to Dept/Supervisor
-                <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              {showTransferDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-lg z-50"
-                >
-                  <div className="py-1">
-                    <button
-                      onClick={() => handleTransfer("Sales Department")}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    >
-                      Sales Department
-                    </button>
-                    <button
-                      onClick={() => handleTransfer("Billing Department")}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    >
-                      Billing Department
-                    </button>
-                    <button
-                      onClick={() => handleTransfer("Technical Support")}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    >
-                      Technical Support
-                    </button>
-                    <button
-                      onClick={() => handleTransfer("Supervisor")}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors border-t border-border"
-                    >
-                      Supervisor
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -471,20 +419,12 @@ export function ChatAgentDesktop({
                     </div>
                     <div>
                       <h2 className="font-semibold text-foreground">{activeConvo.customerName}</h2>
-                      <p className="text-xs text-muted-foreground capitalize">{activeConvo.channel} • Active</p>
+                      <p className="text-xs text-muted-foreground">Banking • Active</p>
                     </div>
                   </>
                 ) : (
                   <div className="text-sm text-muted-foreground">Select a conversation to start</div>
                 )}
-              </div>
-              {/* Transfer button also available in chat header for convenience */}
-              <div className="relative">
-                <Button variant="outline" size="sm" onClick={() => setShowTransferDropdown(!showTransferDropdown)}>
-                  <Users className="w-4 h-4 mr-2" />
-                  Transfer to Dept/Supervisor
-                  <ChevronDown className="w-4 h-4 ml-2" />
-                </Button>
               </div>
             </div>
           </div>
