@@ -196,6 +196,7 @@ export function AppSidebar() {
           const hasAccess = canAccessRoute(user.role, item.href)
           const Icon = item.icon
 
+          if (user.role === "supervisor" && item.name === "Workflows") return null
           if (!hasAccess) return null
 
           return (

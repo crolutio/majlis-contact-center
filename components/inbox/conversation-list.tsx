@@ -167,7 +167,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                   {/* Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {/* Sentiment Badge */}
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 gap-1 rounded-full">
                       <SentimentIcon className={cn("h-2.5 w-2.5", sentimentColors[sentimentKey])} />
                     </Badge>
 
