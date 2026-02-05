@@ -12,7 +12,6 @@ import {
   MessageSquare,
   Mail,
   MessageCircle,
-  Clock,
   AlertTriangle,
   Search,
   ThumbsUp,
@@ -167,31 +166,6 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
 
                   {/* Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {/* SLA Badge */}
-                    {(() => {
-                      const deadline = parseTimestamp(conversation.sla?.deadline)
-                      const remaining = typeof conversation.sla?.remaining === "number"
-                        ? conversation.sla.remaining
-                        : deadline
-                          ? Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 60000))
-                          : null
-                      return (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "text-[10px] px-1.5 py-0 gap-1",
-                            conversation.sla?.status === "healthy" &&
-                              "bg-emerald-500/10 text-emerald-600 border-emerald-200",
-                            conversation.sla?.status === "warning" && "bg-amber-500/10 text-amber-600 border-amber-200",
-                            conversation.sla?.status === "breached" && "bg-red-500/10 text-red-600 border-red-200",
-                          )}
-                        >
-                          <Clock className="h-2.5 w-2.5" />
-                          {remaining !== null ? (remaining > 0 ? `${remaining}m` : "Breached") : "N/A"}
-                        </Badge>
-                      )
-                    })()}
-
                     {/* Sentiment Badge */}
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1">
                       <SentimentIcon className={cn("h-2.5 w-2.5", sentimentColors[sentimentKey])} />

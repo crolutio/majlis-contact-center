@@ -43,6 +43,7 @@ import type { CallAnalysisRow } from "@/lib/automation/types"
 import { useConversationMessages } from "@/lib/hooks/useConversationMessages"
 import type { DbMessage } from "@/lib/types"
 import { MessageContent } from "@/components/ui/message-content"
+import { useAuth } from "@/contexts/auth-context"
 
 const channelIcons = {
   voice: Phone,
@@ -63,10 +64,13 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
   const [handoverOpen, setHandoverOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const lastScrolledConversationId = useRef<string | null>(null)
   const [isEscalating, setIsEscalating] = useState(false)
   const [callAnalysis, setCallAnalysis] = useState<CallAnalysisRow | null>(null)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
   const router = useRouter()
+  const { user } = useAuth()
+  const role = user?.role
   
   // Demo agent ID - replace with real agent ID from context/store
   const agentId = "00000000-0000-0000-0000-000000000001" // TODO: Get from auth context
@@ -153,10 +157,13 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
     }))
     .sort((a, b) => getTimestampMs(a.timestamp) - getTimestampMs(b.timestamp))
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom only when opening a conversation
   useEffect(() => {
+    if (!conversation?.id) return
+    if (lastScrolledConversationId.current === conversation.id) return
+    lastScrolledConversationId.current = conversation.id
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [sortedMessages])
+  }, [conversation?.id])
   
   // Check if conversation is AI-handled (messages should be blocked)
   const isAIHandled = conversation && getHandlingStatus(conversation) === 'ai-handled'
@@ -168,9 +175,11 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
 
   // Fetch call analysis for voice conversations
   useEffect(() => {
-    if (conversation?.channel === 'voice' && conversation?.id) {
+    if (conversation?.channel === 'voice' && conversation?.id && role === "admin") {
       setLoadingAnalysis(true)
-      fetch(`/api/calls/analysis?conversation_id=${conversation.id}`)
+      fetch(`/api/calls/analysis?conversation_id=${conversation.id}`, {
+        headers: { "x-user-role": role || "" },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data.items && data.items.length > 0) {
@@ -186,7 +195,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
     } else {
       setCallAnalysis(null)
     }
-  }, [conversation?.id, conversation?.channel])
+  }, [conversation?.id, conversation?.channel, role])
 
   const handleDelete = async () => {
     if (!conversation || !onDelete) return;
