@@ -40,11 +40,9 @@ export default function InboxPage() {
   const [allFetchedConversations, setAllFetchedConversations] = useState<Conversation[]>([])
 
   // Filter state from QueueSidebar
-  const [selectedQueue, setSelectedQueue] = useState<string>("all")
   const [selectedChannels, setSelectedChannels] = useState<string[]>([])
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([])
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>([])
-  const [selectedSLA, setSelectedSLA] = useState<string[]>([])
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
 
   const parseTimestamp = (value: Date | string | null | undefined) => {
@@ -66,24 +64,6 @@ export default function InboxPage() {
     return startTime ? startTime.getTime() : 0
   }
 
-  // Calculate counts for queues and channels
-  const queueCounts = useMemo(() => {
-    const counts = {
-      all: allFetchedConversations.length,
-      enterprise: 0,
-      sales: 0,
-      billing: 0,
-      technical: 0,
-    }
-    allFetchedConversations.forEach(conv => {
-      const queueName = conv.queue?.toLowerCase() || '';
-      if (queueName.includes("enterprise")) counts.enterprise++;
-      if (queueName.includes("sales")) counts.sales++;
-      if (queueName.includes("billing")) counts.billing++;
-      if (queueName.includes("technical") || queueName.includes("tech")) counts.technical++;
-    })
-    return counts
-  }, [allFetchedConversations])
 
   const channelCounts = useMemo(() => {
     const counts = { voice: 0, chat: 0, email: 0, whatsapp: 0 }
@@ -226,11 +206,9 @@ export default function InboxPage() {
       totalConversations: allFetchedConversations.length,
       handlingStatus: selectedHandlingStatus,
       industry: selectedIndustry,
-      queue: selectedQueue,
       channels: selectedChannels,
       priorities: selectedPriorities,
       sentiments: selectedSentiments,
-      sla: selectedSLA,
       languages: selectedLanguages,
     });
     
@@ -244,26 +222,7 @@ export default function InboxPage() {
       if (conv.metadata?.source !== "banking") return true
       return conv.metadata?.handlingMode === "human"
     })
-    
-    // Apply queue filter
-    if (selectedQueue !== "all") {
-      filtered = filtered.filter(conv => {
-        const queueName = conv.queue?.toLowerCase() || '';
-        switch (selectedQueue) {
-          case "enterprise":
-            return queueName.includes("enterprise");
-          case "sales":
-            return queueName.includes("sales");
-          case "billing":
-            return queueName.includes("billing");
-          case "technical":
-            return queueName.includes("technical") || queueName.includes("tech");
-          default:
-            return true;
-        }
-      });
-    }
-    
+
     // Apply channel filter
     if (selectedChannels.length > 0) {
       filtered = filtered.filter(conv => selectedChannels.includes(conv.channel));
@@ -278,12 +237,7 @@ export default function InboxPage() {
     if (selectedSentiments.length > 0) {
       filtered = filtered.filter(conv => selectedSentiments.includes(conv.sentiment));
     }
-    
-    // Apply SLA status filter
-    if (selectedSLA.length > 0) {
-      filtered = filtered.filter(conv => selectedSLA.includes(conv.sla.status));
-    }
-    
+
     // Apply language filter
     if (selectedLanguages.length > 0) {
       filtered = filtered.filter(conv => {
@@ -338,7 +292,7 @@ export default function InboxPage() {
       setSelectedConversation(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allFetchedConversations, selectedHandlingStatus, selectedQueue, selectedChannels, selectedPriorities, selectedSentiments, selectedSLA, selectedLanguages])
+  }, [allFetchedConversations, selectedHandlingStatus, selectedChannels, selectedPriorities, selectedSentiments, selectedLanguages])
 
   return (
     <div className="flex h-full flex-col">
@@ -368,19 +322,14 @@ export default function InboxPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Queue Sidebar */}
         <QueueSidebar
-          selectedQueue={selectedQueue}
-          onQueueChange={setSelectedQueue}
           selectedChannels={selectedChannels}
           onChannelsChange={setSelectedChannels}
           selectedPriorities={selectedPriorities}
           onPrioritiesChange={setSelectedPriorities}
           selectedSentiments={selectedSentiments}
           onSentimentsChange={setSelectedSentiments}
-          selectedSLA={selectedSLA}
-          onSLAChange={setSelectedSLA}
           selectedLanguages={selectedLanguages}
           onLanguagesChange={setSelectedLanguages}
-          conversationCounts={queueCounts}
           channelCounts={channelCounts}
           languageCounts={languageCounts}
         />

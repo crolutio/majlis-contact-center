@@ -21,7 +21,6 @@ import {
   Bot,
   User,
   UserCheck,
-  ExternalLink,
 } from "lucide-react"
 import type { Conversation } from "@/lib/sample-data"
 import { getHandlingStatus, getHandlingLabel, getHandlingColor } from "@/lib/conversation-handling"
@@ -251,10 +250,6 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                     })()}
                   </div>
                 </div>
-              </div>
-              {/* View Details indicator */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
               </div>
             </button>
           )
