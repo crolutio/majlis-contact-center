@@ -79,11 +79,6 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
     channel: conversation?.channel,
   })
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [dbMessages, sortedMessages])
-
   const handleEscalate = async () => {
     if (!conversation?.id || isEscalating) return
     setIsEscalating(true)
@@ -157,6 +152,11 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
       timestamp: parseTimestamp(msg.timestamp) ?? new Date(0),
     }))
     .sort((a, b) => getTimestampMs(a.timestamp) - getTimestampMs(b.timestamp))
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [sortedMessages])
   
   // Check if conversation is AI-handled (messages should be blocked)
   const isAIHandled = conversation && getHandlingStatus(conversation) === 'ai-handled'
