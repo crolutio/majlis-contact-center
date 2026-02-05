@@ -16,7 +16,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Minus,
-  Globe,
 } from "lucide-react"
 
 const channels = [
@@ -40,12 +39,6 @@ const sentiments = [
 ]
 
 
-const languages = [
-  { id: "en", label: "English", count: 42 },
-  { id: "es", label: "Spanish", count: 8 },
-  { id: "fr", label: "French", count: 3 },
-  { id: "de", label: "German", count: 2 },
-]
 
 interface QueueSidebarProps {
   selectedChannels?: string[]
@@ -54,19 +47,11 @@ interface QueueSidebarProps {
   onPrioritiesChange?: (priorities: string[]) => void
   selectedSentiments?: string[]
   onSentimentsChange?: (sentiments: string[]) => void
-  selectedLanguages?: string[]
-  onLanguagesChange?: (languages: string[]) => void
   channelCounts?: {
     voice?: number
     chat?: number
     email?: number
     whatsapp?: number
-  }
-  languageCounts?: {
-    en?: number
-    es?: number
-    fr?: number
-    de?: number
   }
 }
 
@@ -77,37 +62,26 @@ export function QueueSidebar({
   onPrioritiesChange,
   selectedSentiments: externalSelectedSentiments,
   onSentimentsChange,
-  selectedLanguages: externalSelectedLanguages,
-  onLanguagesChange,
   channelCounts,
-  languageCounts,
 }: QueueSidebarProps = {}) {
 
   const channelsWithCounts = channels.map(ch => ({
     ...ch,
     count: channelCounts?.[ch.id as keyof typeof channelCounts] ?? ch.count
   }))
-
-  const languagesWithCounts = languages.map(lang => ({
-    ...lang,
-    count: languageCounts?.[lang.id as keyof typeof languageCounts] ?? lang.count
-  }))
   // Internal state as fallback if not controlled externally
   const [internalChannels, setInternalChannels] = useState<string[]>([])
   const [internalPriorities, setInternalPriorities] = useState<string[]>([])
   const [internalSentiments, setInternalSentiments] = useState<string[]>([])
-  const [internalLanguages, setInternalLanguages] = useState<string[]>([])
 
   // Use external state if provided, otherwise use internal state
   const selectedChannels = externalSelectedChannels ?? internalChannels
   const selectedPriorities = externalSelectedPriorities ?? internalPriorities
   const selectedSentiments = externalSelectedSentiments ?? internalSentiments
-  const selectedLanguages = externalSelectedLanguages ?? internalLanguages
 
   const setSelectedChannels = onChannelsChange || setInternalChannels
   const setSelectedPriorities = onPrioritiesChange || setInternalPriorities
   const setSelectedSentiments = onSentimentsChange || setInternalSentiments
-  const setSelectedLanguages = onLanguagesChange || setInternalLanguages
 
   const toggleFilter = (current: string[], setter: (val: string[]) => void, value: string) => {
     if (current.includes(value)) {
@@ -207,31 +181,6 @@ export function QueueSidebar({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Language Filter */}
-        <Collapsible>
-          <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium py-1">
-            <span className="flex items-center gap-1.5">
-              <Globe className="h-3.5 w-3.5" />
-              Language
-            </span>
-            <ChevronDown className="h-4 w-4" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2 space-y-2">
-            {languagesWithCounts.map((lang) => (
-              <div key={lang.id} className="flex items-center gap-2">
-                <Checkbox
-                  id={`lang-${lang.id}`}
-                  checked={selectedLanguages.includes(lang.id)}
-                  onCheckedChange={() => toggleFilter(selectedLanguages, setSelectedLanguages, lang.id)}
-                />
-                <Label htmlFor={`lang-${lang.id}`} className="flex items-center gap-2 text-sm cursor-pointer flex-1">
-                  {lang.label}
-                  <span className="ml-auto text-muted-foreground text-xs">{lang.count}</span>
-                </Label>
-              </div>
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
       </div>
     </aside>
   )

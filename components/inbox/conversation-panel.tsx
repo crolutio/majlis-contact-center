@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -62,6 +62,7 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
   const [message, setMessage] = useState("")
   const [handoverOpen, setHandoverOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [isEscalating, setIsEscalating] = useState(false)
   const [callAnalysis, setCallAnalysis] = useState<CallAnalysisRow | null>(null)
   const [loadingAnalysis, setLoadingAnalysis] = useState(false)
@@ -77,6 +78,11 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
     source: (conversation?.metadata?.source as 'banking' | 'default') || 'default',
     channel: conversation?.channel,
   })
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [dbMessages, sortedMessages])
 
   const handleEscalate = async () => {
     if (!conversation?.id || isEscalating) return
@@ -455,7 +461,10 @@ export function ConversationPanel({ conversation, onOpenDrawer, onDelete, onEsca
         )}
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-6">{sortedMessages.map(renderMessage)}</div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-6">
+          {sortedMessages.map(renderMessage)}
+          <div ref={messagesEndRef} />
+        </div>
 
         {/* AI Suggestion - Hidden for AI-handled conversations */}
         {!isAIHandled && (

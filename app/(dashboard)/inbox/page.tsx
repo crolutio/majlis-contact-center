@@ -43,7 +43,6 @@ export default function InboxPage() {
   const [selectedChannels, setSelectedChannels] = useState<string[]>([])
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([])
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>([])
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
 
   const parseTimestamp = (value: Date | string | null | undefined) => {
     if (!value) return null
@@ -75,35 +74,6 @@ export default function InboxPage() {
     return counts
   }, [allFetchedConversations])
 
-  const languageCounts = useMemo(() => {
-    const counts = { en: 0, es: 0, fr: 0, de: 0 }
-    allFetchedConversations.forEach(conv => {
-      let lang = conv.customer.preferredLanguage?.toLowerCase();
-      
-      // If not available, try to map language name to code
-      if (!lang && conv.customer.language) {
-        const langName = conv.customer.language.toLowerCase();
-        const langMap: Record<string, string> = {
-          'english': 'en',
-          'spanish': 'es',
-          'french': 'fr',
-          'german': 'de',
-          'portuguese': 'pt',
-          'italian': 'it',
-          'chinese': 'zh',
-          'japanese': 'ja',
-          'korean': 'ko',
-        };
-        lang = langMap[langName] || langName.substring(0, 2);
-      }
-      
-      lang = lang || 'en';
-      if (Object.prototype.hasOwnProperty.call(counts, lang)) {
-        counts[lang as keyof typeof counts]++
-      }
-    })
-    return counts
-  }, [allFetchedConversations])
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -209,19 +179,12 @@ export default function InboxPage() {
       channels: selectedChannels,
       priorities: selectedPriorities,
       sentiments: selectedSentiments,
-      languages: selectedLanguages,
     });
     
     let filtered = filterByHandlingStatus(allFetchedConversations, selectedHandlingStatus);
 
     // Filter out deleted conversations
     filtered = filtered.filter((conv) => conv.status !== 'deleted');
-
-    // Only show banking conversations after handover is complete (handling_mode = "human")
-    filtered = filtered.filter((conv) => {
-      if (conv.metadata?.source !== "banking") return true
-      return conv.metadata?.handlingMode === "human"
-    })
 
     // Apply channel filter
     if (selectedChannels.length > 0) {
@@ -236,36 +199,6 @@ export default function InboxPage() {
     // Apply sentiment filter
     if (selectedSentiments.length > 0) {
       filtered = filtered.filter(conv => selectedSentiments.includes(conv.sentiment));
-    }
-
-    // Apply language filter
-    if (selectedLanguages.length > 0) {
-      filtered = filtered.filter(conv => {
-        // Try preferredLanguage first (should be language code like 'en', 'es', etc.)
-        let lang = conv.customer.preferredLanguage?.toLowerCase();
-        
-        // If not available, try to map language name to code
-        if (!lang && conv.customer.language) {
-          const langName = conv.customer.language.toLowerCase();
-          const langMap: Record<string, string> = {
-            'english': 'en',
-            'spanish': 'es',
-            'french': 'fr',
-            'german': 'de',
-            'portuguese': 'pt',
-            'italian': 'it',
-            'chinese': 'zh',
-            'japanese': 'ja',
-            'korean': 'ko',
-          };
-          lang = langMap[langName] || langName.substring(0, 2); // Fallback to first 2 chars
-        }
-        
-        // Default to 'en' if nothing found
-        lang = lang || 'en';
-        
-        return selectedLanguages.includes(lang);
-      });
     }
     
     console.log('[Inbox] Filtered conversations:', filtered.length);
@@ -292,7 +225,7 @@ export default function InboxPage() {
       setSelectedConversation(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allFetchedConversations, selectedHandlingStatus, selectedChannels, selectedPriorities, selectedSentiments, selectedLanguages])
+    }, [allFetchedConversations, selectedHandlingStatus, selectedChannels, selectedPriorities, selectedSentiments])
 
   return (
     <div className="flex h-full flex-col">
@@ -328,10 +261,7 @@ export default function InboxPage() {
           onPrioritiesChange={setSelectedPriorities}
           selectedSentiments={selectedSentiments}
           onSentimentsChange={setSelectedSentiments}
-          selectedLanguages={selectedLanguages}
-          onLanguagesChange={setSelectedLanguages}
           channelCounts={channelCounts}
-          languageCounts={languageCounts}
         />
 
       {/* Conversation List */}
