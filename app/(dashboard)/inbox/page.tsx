@@ -64,15 +64,34 @@ export default function InboxPage() {
   }
 
 
+  const baseFilteredConversations = useMemo(() => {
+    let filtered = filterByHandlingStatus(allFetchedConversations, selectedHandlingStatus)
+
+    // Filter out deleted conversations
+    filtered = filtered.filter((conv) => conv.status !== 'deleted')
+
+    // Apply priority filter
+    if (selectedPriorities.length > 0) {
+      filtered = filtered.filter(conv => selectedPriorities.includes(conv.priority))
+    }
+
+    // Apply sentiment filter
+    if (selectedSentiments.length > 0) {
+      filtered = filtered.filter(conv => selectedSentiments.includes(conv.sentiment))
+    }
+
+    return filtered
+  }, [allFetchedConversations, selectedHandlingStatus, selectedPriorities, selectedSentiments])
+
   const channelCounts = useMemo(() => {
     const counts = { voice: 0, chat: 0, email: 0, whatsapp: 0 }
-    allFetchedConversations.forEach(conv => {
+    baseFilteredConversations.forEach(conv => {
       if (Object.prototype.hasOwnProperty.call(counts, conv.channel)) {
         counts[conv.channel as keyof typeof counts]++
       }
     })
     return counts
-  }, [allFetchedConversations])
+  }, [baseFilteredConversations])
 
 
   const fetchConversations = useCallback(async () => {
@@ -181,24 +200,11 @@ export default function InboxPage() {
       sentiments: selectedSentiments,
     });
     
-    let filtered = filterByHandlingStatus(allFetchedConversations, selectedHandlingStatus);
-
-    // Filter out deleted conversations
-    filtered = filtered.filter((conv) => conv.status !== 'deleted');
+    let filtered = baseFilteredConversations
 
     // Apply channel filter
     if (selectedChannels.length > 0) {
-      filtered = filtered.filter(conv => selectedChannels.includes(conv.channel));
-    }
-    
-    // Apply priority filter
-    if (selectedPriorities.length > 0) {
-      filtered = filtered.filter(conv => selectedPriorities.includes(conv.priority));
-    }
-    
-    // Apply sentiment filter
-    if (selectedSentiments.length > 0) {
-      filtered = filtered.filter(conv => selectedSentiments.includes(conv.sentiment));
+      filtered = filtered.filter(conv => selectedChannels.includes(conv.channel))
     }
     
     console.log('[Inbox] Filtered conversations:', filtered.length);
@@ -225,7 +231,7 @@ export default function InboxPage() {
       setSelectedConversation(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [allFetchedConversations, selectedHandlingStatus, selectedChannels, selectedPriorities, selectedSentiments])
+    }, [baseFilteredConversations, selectedChannels])
 
   return (
     <div className="flex h-full flex-col">
