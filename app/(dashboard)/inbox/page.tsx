@@ -235,7 +235,10 @@ export default function InboxPage() {
     });
     
     let filtered = filterByHandlingStatus(allFetchedConversations, selectedHandlingStatus);
-    
+
+    // Filter out deleted conversations
+    filtered = filtered.filter((conv) => conv.status !== 'deleted');
+
     // Only show banking conversations after handover is complete (handling_mode = "human")
     filtered = filtered.filter((conv) => {
       if (conv.metadata?.source !== "banking") return true
